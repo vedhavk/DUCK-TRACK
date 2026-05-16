@@ -135,6 +135,29 @@ def get_me(current: Farmer = Depends(get_current_farmer)):
     return current
 
 
+class FarmerUpdate(BaseModel):
+    name:     Optional[str] = None
+    pin_code: Optional[str] = None
+    district: Optional[str] = None
+    state:    Optional[str] = None
+
+
+@router.patch("/me", response_model=FarmerOut)
+def update_me(
+    data:    FarmerUpdate = ...,
+    current: Farmer = Depends(get_current_farmer),
+    db:      Session = Depends(get_db),
+):
+    """Update mutable profile fields. Email and password are not editable here."""
+    if data.name     is not None: current.name     = data.name
+    if data.pin_code is not None: current.pin_code = data.pin_code
+    if data.district is not None: current.district = data.district
+    if data.state    is not None: current.state    = data.state
+    db.commit()
+    db.refresh(current)
+    return current
+
+
 @router.get("/history")
 def farmer_alert_history(
     current: Farmer = Depends(get_current_farmer),
@@ -160,3 +183,91 @@ def farmer_alert_history(
         }
         for r in records
     ]
+
+
+# ── Duck Yearly Count ─────────────────────────────────────────────────────────
+
+class DuckCountIn(BaseModel):
+    year:       int
+    duck_count: int
+
+
+class DuckCountOut(BaseModel):
+    id:         int
+    year:       int
+    duck_count: int
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/duck-counts", response_model=list[DuckCountOut])
+def get_duck_counts(
+    current: Farmer = Depends(get_current_farmer),
+    db:      Session = Depends(get_db),
+):
+    """Return all yearly duck counts for the current farmer, sorted by year desc."""
+    from database import DuckYearlyCount
+    rows = (
+        db.query(DuckYearlyCount)
+        .filter(DuckYearlyCount.farmer_id == current.id)
+        .order_by(DuckYearlyCount.year.desc())
+        .all()
+    )
+    return rows
+
+
+@router.post("/duck-counts", response_model=DuckCountOut, status_code=status.HTTP_201_CREATED)
+def upsert_duck_count(
+    data:    DuckCountIn,
+    current: Farmer = Depends(get_current_farmer),
+    db:      Session = Depends(get_db),
+):
+    """Insert or update the duck count for a given year (upsert by farmer_id + year)."""
+    from database import DuckYearlyCount
+    existing = (
+        db.query(DuckYearlyCount)
+        .filter(
+            DuckYearlyCount.farmer_id == current.id,
+            DuckYearlyCount.year      == data.year,
+        )
+        .first()
+    )
+    if existing:
+        existing.duck_count = data.duck_count
+        existing.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        return existing
+    row = DuckYearlyCount(
+        farmer_id  = current.id,
+        year       = data.year,
+        duck_count = data.duck_count,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.delete("/duck-counts/{year}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_duck_count(
+    year:    int,
+    current: Farmer = Depends(get_current_farmer),
+    db:      Session = Depends(get_db),
+):
+    """Delete the duck count entry for a given year."""
+    from database import DuckYearlyCount
+    row = (
+        db.query(DuckYearlyCount)
+        .filter(
+            DuckYearlyCount.farmer_id == current.id,
+            DuckYearlyCount.year      == year,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="No entry found for this year")
+    db.delete(row)
+    db.commit()

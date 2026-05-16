@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Upload, Camera, User, MapPin, Mail, Hash, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Upload, Camera, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   farmerMe,
@@ -15,7 +15,6 @@ export default function FarmDashboard() {
   const [profile, setProfile] = useState<FarmerOut | null>(
     getUser() as FarmerOut | null
   );
-  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,11 +33,7 @@ export default function FarmDashboard() {
         setProfile(data);
         setPinCode(data.pin_code);
       })
-      .catch((err) =>
-        setProfileError(
-          err instanceof Error ? err.message : "Failed to load profile"
-        )
-      );
+      .catch(() => {/* profile already loaded from localStorage */});
   }, []);
 
   // Try to prefill GPS
@@ -85,41 +80,6 @@ export default function FarmDashboard() {
 
   return (
     <div className="max-w-5xl space-y-8">
-      {/* Profile Card */}
-      <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-          <User className="w-5 h-5 text-teal-500" />
-          My Profile
-        </h3>
-        {profileError && (
-          <p className="text-sm text-rose-500">{profileError}</p>
-        )}
-        {profile && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { icon: User, label: "Name", value: profile.name },
-              { icon: Mail, label: "Email", value: profile.email },
-              { icon: MapPin, label: "District", value: profile.district },
-              { icon: MapPin, label: "State", value: profile.state },
-              { icon: Hash, label: "PIN Code", value: profile.pin_code },
-            ].map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800"
-              >
-                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1">
-                  <Icon className="w-3 h-3" />
-                  {label}
-                </p>
-                <p className="font-semibold text-slate-800 dark:text-white truncate">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Upload & Detection Card */}
       <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">

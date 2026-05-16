@@ -249,3 +249,68 @@ export async function getOutbreakHistory(): Promise<OutbreakRecord[]> {
   });
   return handleResponse<OutbreakRecord[]>(res);
 }
+
+// ── Profile update endpoints ──────────────────────────────────────────────────
+
+export interface ProfileUpdate {
+  name?: string;
+  pin_code?: string;
+  district?: string;
+  state?: string;
+}
+
+export async function farmerUpdateMe(data: ProfileUpdate): Promise<FarmerOut> {
+  const res = await fetch(`${API_BASE}/farmer/me`, {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<FarmerOut>(res);
+}
+
+export async function vetUpdateMe(data: ProfileUpdate): Promise<VetOut> {
+  const res = await fetch(`${API_BASE}/veterinary/me`, {
+    method: "PATCH",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<VetOut>(res);
+}
+
+// ── Duck yearly count endpoints ───────────────────────────────────────────────
+
+export interface DuckYearlyCount {
+  id: number;
+  year: number;
+  duck_count: number;
+  updated_at: string | null;
+}
+
+export async function getDuckCounts(): Promise<DuckYearlyCount[]> {
+  const res = await fetch(`${API_BASE}/farmer/duck-counts`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<DuckYearlyCount[]>(res);
+}
+
+export async function upsertDuckCount(
+  year: number,
+  duck_count: number
+): Promise<DuckYearlyCount> {
+  const res = await fetch(`${API_BASE}/farmer/duck-counts`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ year, duck_count }),
+  });
+  return handleResponse<DuckYearlyCount>(res);
+}
+
+export async function deleteDuckCount(year: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/farmer/duck-counts/${year}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok && res.status !== 204) {
+    await handleResponse<void>(res);
+  }
+}

@@ -135,6 +135,29 @@ def get_me(current: Veterinary = Depends(get_current_vet)):
     return current
 
 
+class VetUpdate(BaseModel):
+    name:     Optional[str] = None
+    pin_code: Optional[str] = None
+    district: Optional[str] = None
+    state:    Optional[str] = None
+
+
+@router.patch("/me", response_model=VetOut)
+def update_me(
+    data:    VetUpdate,
+    current: Veterinary = Depends(get_current_vet),
+    db:      Session    = Depends(get_db),
+):
+    """Update mutable profile fields. Email and password are not editable here."""
+    if data.name     is not None: current.name     = data.name
+    if data.pin_code is not None: current.pin_code = data.pin_code
+    if data.district is not None: current.district = data.district
+    if data.state    is not None: current.state    = data.state
+    db.commit()
+    db.refresh(current)
+    return current
+
+
 @router.get("/history")
 def vet_alert_history(
     current: Veterinary = Depends(get_current_vet),
@@ -163,4 +186,4 @@ def vet_alert_history(
             ),
         }
         for r in records
-    ]
+    ]

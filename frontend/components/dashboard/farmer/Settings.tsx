@@ -1,89 +1,227 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Mail, MapPin, Hash, Info, LogOut } from "lucide-react";
+import {
+  User,
+  Mail,
+  MapPin,
+  Hash,
+  LogOut,
+  Pencil,
+  Check,
+  X,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { farmerMe, clearToken, type FarmerOut } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import {
+  farmerMe,
+  farmerUpdateMe,
+  clearToken,
+  setUser,
+  type FarmerOut,
+} from "@/lib/api";
 import { useRouter } from "next/navigation";
+
+type EditField = "name" | "pin_code" | "district" | "state" | null;
 
 export default function Settings() {
   const [profile, setProfile] = useState<FarmerOut | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Edit state
+  const [editField, setEditField] = useState<EditField>(null);
+  const [editValue, setEditValue] = useState("");
+  const [saving, setSaving]       = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
     farmerMe()
-      .then(setProfile)
+      .then((data) => { setProfile(data); setUser(data); })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load profile.")
+        setFetchError(err instanceof Error ? err.message : "Failed to load profile.")
       )
       .finally(() => setLoading(false));
   }, []);
+
+  function startEdit(field: EditField, currentValue: string) {
+    setEditField(field);
+    setEditValue(currentValue);
+    setSaveError(null);
+    setSaveSuccess(false);
+  }
+
+  function cancelEdit() {
+    setEditField(null);
+    setEditValue("");
+    setSaveError(null);
+  }
+
+  async function handleSave() {
+    if (!editField || !profile) return;
+    const trimmed = editValue.trim();
+    if (!trimmed) {
+      setSaveError("Value cannot be empty.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const updated = await farmerUpdateMe({ [editField]: trimmed });
+      setProfile(updated);
+      setUser(updated);
+      setSaveSuccess(true);
+      setEditField(null);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save changes.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function handleLogout() {
     clearToken();
     router.push("/");
   }
 
+  const editableFields: {
+    key: EditField & string;
+    label: string;
+    icon: React.ElementType;
+    placeholder: string;
+  }[] = [
+    { key: "name",     label: "Full Name", icon: User,   placeholder: "Your full name" },
+    { key: "district", label: "District",  icon: MapPin, placeholder: "e.g. Ernakulam" },
+    { key: "state",    label: "State",     icon: MapPin, placeholder: "e.g. Kerala" },
+    { key: "pin_code", label: "PIN Code",  icon: Hash,   placeholder: "e.g. 682001" },
+  ];
+
   return (
-    <div className="max-w-3xl space-y-6">
-      {/* Profile Info */}
-      <div className="bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/40 rounded-lg flex items-center justify-center">
+    <div className="max-w-2xl space-y-6">
+      {/* Profile Card */}
+      <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/40 rounded-xl flex items-center justify-center">
             <User className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-            My Profile
-          </h3>
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">My Profile</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Click the pencil icon to edit any field</p>
+          </div>
         </div>
 
         {loading && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading profile…</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading profile…
+          </p>
         )}
-        {error && <p className="text-sm text-rose-500">{error}</p>}
+        {fetchError && <p className="text-sm text-rose-500">{fetchError}</p>}
+
+        {saveSuccess && (
+          <div className="mb-4 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+            <Check className="w-4 h-4" />
+            Profile updated successfully!
+          </div>
+        )}
+        {saveError && (
+          <div className="mb-4 px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl text-sm text-rose-700 dark:text-rose-400">
+            {saveError}
+          </div>
+        )}
+
         {profile && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { icon: User, label: "Full Name", value: profile.name },
-              { icon: Mail, label: "Email", value: profile.email },
-              { icon: MapPin, label: "District", value: profile.district },
-              { icon: MapPin, label: "State", value: profile.state },
-              { icon: Hash, label: "PIN Code", value: profile.pin_code },
-            ].map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
-              >
-                <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
-                  <p className="font-semibold text-slate-800 dark:text-white">{value}</p>
-                </div>
+          <div className="space-y-3">
+            {/* Email — read-only */}
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+              <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 dark:text-slate-400">Email (read-only)</p>
+                <p className="font-semibold text-slate-800 dark:text-white truncate">{profile.email}</p>
               </div>
-            ))}
+              <div title="Email cannot be changed" className="flex-shrink-0">
+                <ShieldCheck className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+              </div>
+            </div>
+
+            {/* Editable fields */}
+            {editableFields.map(({ key, label, icon: Icon, placeholder }) => {
+              const value = profile[key as keyof FarmerOut] as string;
+              const isEditing = editField === key;
+              return (
+                <div
+                  key={key}
+                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    isEditing
+                      ? "bg-teal-50 dark:bg-teal-950/20 border-teal-300 dark:border-teal-700"
+                      : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+                    {isEditing ? (
+                      <Input
+                        autoFocus
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder={placeholder}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSave();
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                        className="mt-1 h-8 text-sm bg-white dark:bg-slate-900 border-teal-300 dark:border-teal-700 focus:ring-teal-500"
+                      />
+                    ) : (
+                      <p className="font-semibold text-slate-800 dark:text-white truncate">{value}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={handleSave}
+                          disabled={saving}
+                          className="p-1.5 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/60 transition"
+                        >
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          disabled={saving}
+                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => startEdit(key as EditField, value)}
+                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 hover:text-teal-600 dark:hover:text-teal-400 transition"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Info notice */}
-      <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800 p-5 flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-        <p className="text-sm text-blue-700 dark:text-blue-400">
-          Profile editing and password changes are not currently supported. Contact your system administrator for account updates.
-        </p>
-      </div>
-
-      {/* Logout */}
-      <div className="bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+      {/* Session / Logout */}
+      <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900/30 rounded-xl flex items-center justify-center">
             <LogOut className="w-5 h-5 text-rose-600 dark:text-rose-400" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-            Session
-          </h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Session</h3>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
           You are currently logged in as a <strong>Farmer</strong>. Click below to sign out securely.

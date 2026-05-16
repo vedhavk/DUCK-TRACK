@@ -90,6 +90,22 @@ class OutbreakHistory(Base):
     created_at    = Column(DateTime, default=datetime.utcnow)
 
 
+class DuckYearlyCount(Base):
+    """
+    Manually entered yearly duck population count per farmer.
+    One row per (farmer_id, year) pair — use UPSERT logic in the API.
+    Designed for easy extension to automated tracking in future.
+    """
+    __tablename__ = "duck_yearly_count"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    farmer_id  = Column(Integer, ForeignKey("farmer.id"), nullable=False)
+    year       = Column(Integer, nullable=False)
+    duck_count = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def get_db():
@@ -101,4 +117,4 @@ def get_db():
 
 
 def create_tables():
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine)

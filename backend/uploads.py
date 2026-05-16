@@ -132,31 +132,34 @@ async def upload_file(
 
     alerts_sent = None
 
+    # ── Always persist the scan record (healthy OR diseased) ─────────────────
+    if role == "farmer":
+        record = AlertCallFarmer(
+            latitude  = latitude,
+            longitude = longitude,
+            pin_code  = pin_code,
+            farmer_id = user.id,
+            prediction= prediction,
+            file_type = file_type,
+            alert_sent= "n/a",          # default for healthy; overwritten if diseased
+        )
+    else:
+        record = AlertCallVeterinary(
+            latitude      = latitude,
+            longitude     = longitude,
+            pin_code      = pin_code,
+            veterinary_id = user.id,
+            prediction    = prediction,
+            file_type     = file_type,
+            alert_sent    = "n/a",
+        )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+
     if prediction == "diseased":
-        # ── 1. Role-specific alert record ────────────────────────────────────
-        if role == "farmer":
-            record = AlertCallFarmer(
-                latitude  = latitude,
-                longitude = longitude,
-                pin_code  = pin_code,
-                farmer_id = user.id,
-                prediction= prediction,
-                file_type = file_type,
-                alert_sent= "pending",
-            )
-        else:
-            record = AlertCallVeterinary(
-                latitude      = latitude,
-                longitude     = longitude,
-                pin_code      = pin_code,
-                veterinary_id = user.id,
-                prediction    = prediction,
-                file_type     = file_type,
-                alert_sent    = "pending",
-            )
-        db.add(record)
-        db.commit()
-        db.refresh(record)
+        # ── 1. Update alert_sent on the newly created record ─────────────────
+        record.alert_sent = "pending"
 
         # ── 2. Write to unified OutbreakHistory ──────────────────────────────
         history = OutbreakHistory(
@@ -176,8 +179,8 @@ async def upload_file(
         # ── 3. Broadcast emails ──────────────────────────────────────────────
         alerts_sent = _broadcast_all(db, latitude, longitude, pin_code)
 
-        total_sent      = len(alerts_sent["farmers"]) + len(alerts_sent["vets"])
-        status_str      = "sent" if total_sent > 0 else "failed"
+        total_sent         = len(alerts_sent["farmers"]) + len(alerts_sent["vets"])
+        status_str         = "sent" if total_sent > 0 else "failed"
         record.alert_sent  = status_str
         history.alert_sent = status_str
         db.commit()
