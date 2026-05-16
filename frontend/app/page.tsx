@@ -1,44 +1,35 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Sprout,
   Stethoscope,
   Shield,
-  Upload,
   ArrowRight,
-  Camera,
-  Image as ImageIcon,
+  AlertTriangle,
+  Info,
+  CheckCircle
 } from "lucide-react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-
-  function handleTakePhotoClick() {
-    cameraInputRef.current?.click();
-  }
-
-  function handleChooseFromGalleryClick() {
-    galleryInputRef.current?.click();
-  }
-
-  function handleQuickUploadChange(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    setSelectedFiles(files.map((file) => file.name));
-  }
-
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4 transition-colors duration-300">
       <div className="w-full max-w-6xl mx-auto">
-        <div className="absolute top-4 right-4 md:top-8 md:right-8">
+        <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-4">
+          <Link href="/login/admin" className="group relative">
+            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
+              <Shield className="w-5 h-5" />
+            </Button>
+            <div className="absolute right-0 top-full mt-2 w-max px-3 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg">
+              Welcome Admins
+            </div>
+          </Link>
           <ThemeToggle />
         </div>
+        
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
@@ -57,92 +48,99 @@ export default function Home() {
             Smart Duck Monitoring System
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-            Upload duck images first or select your role to continue
+            Select your role to continue
           </p>
         </div>
 
-        {/* Quick Analysis Section */}
+        {/* Avian Influenza Awareness Section */}
         <div className="mb-16 w-full max-w-5xl mx-auto">
           <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden transition-colors">
             <div className="flex flex-col md:flex-row">
               {/* Image Banner Side */}
-              <div className="md:w-2/5 relative min-h-[220px] md:min-h-auto">
+              <div className="md:w-2/5 relative min-h-[260px] md:min-h-auto">
                 <div 
                   className="absolute inset-0 bg-[url('/ducks_swimming.jpg')] bg-cover bg-center" 
                   aria-label="Ducks swimming in a lake"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-slate-900/20 to-transparent md:bg-linear-to-r md:from-slate-900/20 md:to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-slate-900/40 to-transparent md:bg-linear-to-r md:from-slate-900/50 md:to-transparent" />
                 
                 {/* Mobile Title overlay */}
                 <div className="absolute bottom-6 left-6 text-white md:hidden">
-                  <h2 className="text-2xl font-bold font-serif shadow-sm">Quick Analysis</h2>
-                  <p className="text-sm opacity-90 mt-1">Upload media for instant detection</p>
+                  <h2 className="text-2xl font-bold font-serif shadow-sm">Avian Influenza</h2>
+                  <p className="text-sm opacity-90 mt-1 flex items-center gap-1">
+                    <Info className="w-4 h-4" /> Important Awareness
+                  </p>
                 </div>
               </div>
 
-              {/* Upload Interface Side */}
+              {/* Information Side */}
               <div className="md:w-3/5 p-8 md:p-10 flex flex-col justify-center">
                 {/* Desktop Title */}
-                <div className="hidden md:block mb-8">
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white font-serif">
-                    Instant Analysis Tool
-                  </h2>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2">
-                    Upload a photo or video to instantly start duck disease detection.
-                  </p>
-                </div>
-
-                {/* Upload Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <button 
-                    onClick={handleChooseFromGalleryClick}
-                    className="group h-24 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-[#00a693] dark:hover:border-emerald-500 transition-all text-slate-600 dark:text-slate-300"
-                  >
-                    <div className="p-2 bg-white dark:bg-slate-700 rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                      <Upload className="w-5 h-5 text-[#00a693] dark:text-emerald-500" />
-                    </div>
-                    <span className="font-semibold text-sm">Upload File</span>
-                  </button>
+                <div className="hidden md:flex flex-col mb-6">
                   
-                  <button 
-                    onClick={handleTakePhotoClick}
-                    className="group h-24 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-[#00a693] dark:hover:border-emerald-500 transition-all text-slate-600 dark:text-slate-300"
-                  >
-                    <div className="p-2 bg-white dark:bg-slate-700 rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                      <Camera className="w-5 h-5 text-[#00a693] dark:text-emerald-500" />
-                    </div>
-                    <span className="font-semibold text-sm">Use Camera</span>
-                  </button>
+                  <h2 className="text-3xl font-bold text-slate-800 dark:text-white font-serif leading-tight">
+                    Avian Influenza Alert & Early Reporting
+                  </h2>
                 </div>
 
-                {/* Selected File Feedback */}
-                {selectedFiles.length > 0 && (
-                  <div className="mb-6 px-4 py-3 bg-[#00a693]/5 dark:bg-emerald-500/10 rounded-xl border border-[#00a693]/20 dark:border-emerald-500/20 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">
-                      <ImageIcon className="w-4 h-4 text-[#00a693] dark:text-emerald-500" />
-                    </div>
-                    <div className="flex-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
-                      {selectedFiles.join(", ")}
-                    </div>
-                  </div>
-                )}
+                <p className="text-slate-600 dark:text-slate-300 text-sm md:text-base leading-relaxed mb-6">
+                  Avian Influenza (Bird Flu) is a highly contagious viral disease that can rapidly spread among ducks and poultry. Early detection and quick reporting are critical to prevent outbreaks, protect farms, and safeguard nearby poultry populations.
+                </p>
 
-                {/* Action Buttons */}
-                <div className="flex gap-4 mt-auto">
-                  <Button 
-                    className="flex-1 h-12 rounded-xl bg-[#00a693] hover:bg-[#008f7f] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold transition-all shadow-md hover:shadow-lg"
-                  >
-                    Start Detection
-                  </Button>
-                  {selectedFiles.length > 0 && (
-                     <Button 
-                       variant="outline"
-                       className="px-6 h-12 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-all font-semibold"
-                       onClick={() => setSelectedFiles([])}
-                     >
-                       Clear
-                     </Button>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Important Points</h3>
+                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                        <span>Spreads quickly between birds.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                        <span>Symptoms: sudden death, Respiratory distress, Behavioral changes, swelling, breathing difficulty, reduced egg production.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                        <span>Early reporting helps vets respond faster.</span>
+                      </li>
+                    
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Why It Matters</h3>
+                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <span>Protect nearby farms</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <span>Prevent disease spreading</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <span>Enable fast veterinary response</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <span>Help authorities track outbreaks</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                
+
+                <div className="mt-auto">
+                  <Link href="/login/farmer">
+                    <Button 
+                      className="w-full h-12 rounded-xl bg-green-600 hover:bg-rose-700 dark:bg-green-600 dark:hover:bg-green-400 text-white font-bold transition-all shadow-md hover:shadow-lg text-lg flex items-center justify-center gap-2"
+                    >
+                      Report a Suspected Disease
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -150,7 +148,7 @@ export default function Home() {
         </div>
 
         {/* Role Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-4xl mx-auto">
           {/* Farmer Card */}
           <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-8 pb-6 text-center">
@@ -185,27 +183,6 @@ export default function Home() {
               <Link href="/login/veterinarian">
                 <Button className="w-full bg-[#334155] dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-medium py-5 rounded-lg group">
                   Sign In as Veterinarian
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* System Admin Card */}
-          <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
-            <CardContent className="pt-8 pb-6 text-center">
-              <div className="mx-auto mb-6 w-16 h-16 bg-[#334155] dark:bg-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">
-                System Admin
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 min-h-12">
-                Manage system, train models, and control settings
-              </p>
-              <Link href="/login/admin">
-                <Button className="w-full bg-[#334155] dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-medium py-5 rounded-lg group">
-                  Sign In as System Admin
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
