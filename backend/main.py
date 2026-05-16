@@ -36,7 +36,8 @@ app.add_middleware(
 app.include_router(farmer.router)
 app.include_router(veterinary.router)
 app.include_router(uploads.router)
-
+import chatbot_service
+app.include_router(chatbot_service.router)
 
 @app.get("/", tags=["Health"])
 def root():
