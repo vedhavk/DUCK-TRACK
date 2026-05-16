@@ -4,12 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   FileText,
-  HeartPulse,
-  ImageIcon,
   LogOut,
   Settings,
   Stethoscope,
   Users,
+  Map as MapIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import {
   MedicalReports,
   VeterinarianSettings,
   FarmerOverview,
+  DiseaseSpreadMap,
 } from "@/components/dashboard/veterinarian";
 import ThemeToggle from "@/components/ThemeToggle";
 import { clearToken, getUser } from "@/lib/api";
@@ -27,6 +27,7 @@ const menuItems = [
   { id: "health", label: "Health Monitoring", icon: Stethoscope },
   { id: "farmers", label: "Farmer Overview", icon: Users },
   { id: "reports", label: "Medical Reports", icon: FileText },
+  { id: "map", label: "Disease Spread Map", icon: MapIcon },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -42,6 +43,10 @@ const pageMeta = {
   reports: {
     title: "Medical Reports",
     subtitle: "View your personal detection history and disease hotspots",
+  },
+  map: {
+    title: "Disease Spread Map",
+    subtitle: "Interactive heatmap of disease outbreaks and risk zones",
   },
   settings: {
     title: "Settings",
@@ -163,6 +168,7 @@ export default function VeterinarianDashboardPage() {
           {activeMenu === "health" && <HealthMonitoring />}
           {activeMenu === "farmers" && <FarmerOverview />}
           {activeMenu === "reports" && <MedicalReports />}
+          {activeMenu === "map" && <DiseaseSpreadMap />}
           {activeMenu === "settings" && <VeterinarianSettings />}
         </div>
       </main>

@@ -227,4 +227,32 @@ def get_farmers_overview(
             "latest_count_year": latest_count.year if latest_count else None,
         })
         
+    return results
+
+# ── Disease Spread Map ────────────────────────────────────────────────────────
+
+@router.get("/disease-map")
+def get_disease_map(
+    current: Veterinary = Depends(get_current_vet),
+    db:      Session = Depends(get_db),
+):
+    from database import OutbreakHistory
+    
+    outbreaks = (
+        db.query(OutbreakHistory)
+        .order_by(OutbreakHistory.created_at.desc())
+        .limit(1)
+        .all()
+    )
+    
+    results = []
+    for ob in outbreaks:
+        results.append({
+            "farm_name": ob.reporter_name,
+            "latitude": ob.latitude,
+            "longitude": ob.longitude,
+            "disease": "Duck Virus", # or use prediction logic if added to db
+            "date_detected": ob.created_at.date().isoformat()
+        })
+        
     return results

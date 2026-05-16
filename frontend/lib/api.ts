@@ -330,3 +330,18 @@ export async function getFarmersOverview(): Promise<{
   });
   return handleResponse(res);
 }
+
+export type DiseaseMapLocation = {
+  farm_name: string;
+  latitude: number;
+  longitude: number;
+  disease: string;
+  date_detected: string;
+};
+
+export async function getDiseaseMap(): Promise<DiseaseMapLocation[]> {
+  const res = await fetch(`${API_BASE}/veterinary/disease-map`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse(res);
+}
