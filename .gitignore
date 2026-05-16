@@ -70,3 +70,7 @@ yarn-error.log*
 # =========================
 *.pem
 *.key
+
+frontend/.next/
+node_modules/
+.venv/
