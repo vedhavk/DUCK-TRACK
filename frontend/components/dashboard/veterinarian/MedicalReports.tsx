@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   FileText,
   AlertTriangle,
@@ -8,8 +9,11 @@ import {
   Clock,
   MapPin,
   Filter,
+  Map as MapIcon,
 } from "lucide-react";
 import { vetHistory, type AlertHistoryRecord } from "@/lib/api";
+
+const DiseaseMap = dynamic(() => import("./Map"), { ssr: false });
 
 type FilterTab = "all" | "healthy" | "diseased";
 
@@ -72,6 +76,17 @@ export default function MedicalReports() {
           </div>
         ))}
       </div>
+
+      {/* Disease Map Visualization */}
+      {!loading && !error && diseased > 0 && (
+        <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-5 shadow-sm border border-slate-200 dark:border-slate-800">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+            <MapIcon className="w-5 h-5 text-blue-500" />
+            Disease Hotspots
+          </h3>
+          <DiseaseMap records={records} />
+        </section>
+      )}
 
       <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-5 shadow-sm border border-slate-200 dark:border-slate-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

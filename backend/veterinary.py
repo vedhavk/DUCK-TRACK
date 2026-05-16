@@ -186,4 +186,45 @@ def vet_alert_history(
             ),
         }
         for r in records
-    ]
+    ]
+
+# ── Farmer Overview ────────────────────────────────────────────────────────────
+
+@router.get("/farmers-overview")
+def get_farmers_overview(
+    current: Veterinary = Depends(get_current_vet),
+    db:      Session = Depends(get_db),
+):
+    from database import Farmer, DuckYearlyCount
+    from sqlalchemy import func
+
+    # Subquery to get latest duck count year per farmer
+    # Alternatively, just sum up all duck counts, or get the latest.
+    # The requirement says "Total ducks per farmer. Year-wise or current count".
+    # Let's return the sum of all ducks, or better yet, a list of year/counts, or just the most recent year's count.
+    # To keep it simple and clean, let's join and get the total count or array.
+    
+    farmers = db.query(Farmer).all()
+    
+    results = []
+    for f in farmers:
+        # Get latest duck count
+        latest_count = (
+            db.query(DuckYearlyCount)
+            .filter(DuckYearlyCount.farmer_id == f.id)
+            .order_by(DuckYearlyCount.year.desc())
+            .first()
+        )
+        
+        results.append({
+            "farmer_id": f.id,
+            "name": f.name,
+            "email": f.email,
+            "district": f.district,
+            "state": f.state,
+            "pin_code": f.pin_code,
+            "latest_duck_count": latest_count.duck_count if latest_count else 0,
+            "latest_count_year": latest_count.year if latest_count else None,
+        })
+        
+    return results

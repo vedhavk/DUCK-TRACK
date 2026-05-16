@@ -314,3 +314,19 @@ export async function deleteDuckCount(year: number): Promise<void> {
     await handleResponse<void>(res);
   }
 }
+
+export async function getFarmersOverview(): Promise<{
+  farmer_id: number;
+  name: string;
+  email: string;
+  district: string;
+  state: string;
+  pin_code: string;
+  latest_duck_count: number;
+  latest_count_year: number | null;
+}[]> {
+  const res = await fetch(`${API_BASE}/veterinary/farmers-overview`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse(res);
+}

@@ -9,15 +9,15 @@ import {
   LogOut,
   Settings,
   Stethoscope,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
-  BehaviorAnalysis,
   HealthMonitoring,
-  ImageReview,
   MedicalReports,
   VeterinarianSettings,
+  FarmerOverview,
 } from "@/components/dashboard/veterinarian";
 import ThemeToggle from "@/components/ThemeToggle";
 import { clearToken, getUser } from "@/lib/api";
@@ -25,8 +25,7 @@ import { useRouter } from "next/navigation";
 
 const menuItems = [
   { id: "health", label: "Health Monitoring", icon: Stethoscope },
-  { id: "behavior", label: "Behavior Analysis", icon: HeartPulse },
-  { id: "images", label: "Image Review", icon: ImageIcon },
+  { id: "farmers", label: "Farmer Overview", icon: Users },
   { id: "reports", label: "Medical Reports", icon: FileText },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const;
@@ -36,17 +35,13 @@ const pageMeta = {
     title: "Veterinarian Health Panel",
     subtitle: "Monitor duck health, run detections, and view outbreak history",
   },
-  behavior: {
-    title: "Behavior Analysis",
-    subtitle: "Analyze duck behavior patterns for health insights",
-  },
-  images: {
-    title: "Image Review",
-    subtitle: "Review detection images and health assessments",
+  farmers: {
+    title: "Farmer & Duck Overview",
+    subtitle: "View registered farmers and their current duck populations",
   },
   reports: {
     title: "Medical Reports",
-    subtitle: "View your personal detection history",
+    subtitle: "View your personal detection history and disease hotspots",
   },
   settings: {
     title: "Settings",
@@ -140,7 +135,7 @@ export default function VeterinarianDashboardPage() {
         </div>
       </aside>
 
-      <main className="flex flex-1 flex-col">
+      <main className="flex flex-1 flex-col overflow-y-auto">
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl px-8 py-5">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
@@ -166,8 +161,7 @@ export default function VeterinarianDashboardPage() {
 
         <div className="flex-1 p-4 md:p-6 lg:p-8">
           {activeMenu === "health" && <HealthMonitoring />}
-          {activeMenu === "behavior" && <BehaviorAnalysis />}
-          {activeMenu === "images" && <ImageReview />}
+          {activeMenu === "farmers" && <FarmerOverview />}
           {activeMenu === "reports" && <MedicalReports />}
           {activeMenu === "settings" && <VeterinarianSettings />}
         </div>
@@ -175,3 +169,4 @@ export default function VeterinarianDashboardPage() {
     </div>
   );
 }
+

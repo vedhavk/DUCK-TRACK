@@ -17,10 +17,12 @@ import { Button } from "@/components/ui/button";
 import {
   vetMe,
   getOutbreakHistory,
+  vetHistory,
   uploadFile,
   getUser,
   type VetOut,
   type OutbreakRecord,
+  type AlertHistoryRecord,
   type UploadResult,
 } from "@/lib/api";
 
@@ -37,6 +39,11 @@ export default function HealthMonitoring() {
     getUser() as VetOut | null
   );
   const [profileError, setProfileError] = useState<string | null>(null);
+  
+  // Stats state from personal history
+  const [records, setRecords] = useState<AlertHistoryRecord[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(true);
+
   const [outbreaks, setOutbreaks] = useState<OutbreakRecord[]>([]);
   const [obLoading, setObLoading] = useState(true);
   const [obError, setObError] = useState<string | null>(null);
@@ -63,6 +70,11 @@ export default function HealthMonitoring() {
           err instanceof Error ? err.message : "Failed to load profile"
         )
       );
+
+    vetHistory()
+      .then(setRecords)
+      .catch(() => {})
+      .finally(() => setRecordsLoading(false));
 
     getOutbreakHistory()
       .then(setOutbreaks)
@@ -113,8 +125,9 @@ export default function HealthMonitoring() {
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
-      // Refresh outbreaks
+      // Refresh histories
       getOutbreakHistory().then(setOutbreaks).catch(() => {});
+      vetHistory().then(setRecords).catch(() => {});
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
@@ -122,64 +135,33 @@ export default function HealthMonitoring() {
     }
   }
 
-  const total = outbreaks.length;
-  const diseased = outbreaks.length; // all outbreaks are diseased by definition
-  const healthy = 0;
+  const total = records.length;
+  const diseased = records.filter(r => r.prediction === "diseased").length;
+  const healthy = total - diseased;
 
   return (
     <div className="space-y-6">
-      {/* Profile */}
-      <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-        <h3 className="text-base font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-          <User className="w-4 h-4 text-blue-500" />
-          My Profile
-        </h3>
-        {profileError && <p className="text-sm text-rose-500">{profileError}</p>}
-        {profile && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[
-              { label: "Name", value: profile.name },
-              { label: "Email", value: profile.email },
-              { label: "District", value: profile.district },
-              { label: "State", value: profile.state },
-              { label: "PIN Code", value: profile.pin_code },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800"
-              >
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">
-                  {label}
-                </p>
-                <p className="font-semibold text-slate-800 dark:text-white text-sm truncate">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Summary stats */}
       <div className="grid gap-4 md:grid-cols-3">
         {[
           {
-            label: "Total Outbreaks",
-            value: obLoading ? "—" : String(total),
+            label: "Total Scans",
+            value: recordsLoading ? "—" : String(total),
             accent: "border-slate-200 dark:border-slate-800",
             valColor: "text-slate-800 dark:text-white",
             icon: <Activity className="h-6 w-6 text-slate-500" />,
           },
           {
             label: "Disease Events",
-            value: obLoading ? "—" : String(diseased),
+            value: recordsLoading ? "—" : String(diseased),
             accent: "border-rose-200 dark:border-rose-800",
             valColor: "text-rose-600 dark:text-rose-400",
             icon: <AlertTriangle className="h-6 w-6 text-rose-500" />,
           },
           {
             label: "Healthy Reports",
-            value: obLoading ? "—" : String(healthy),
+            value: recordsLoading ? "—" : String(healthy),
             accent: "border-emerald-200 dark:border-emerald-800",
             valColor: "text-emerald-600 dark:text-emerald-400",
             icon: <CheckCircle2 className="h-6 w-6 text-emerald-500" />,
