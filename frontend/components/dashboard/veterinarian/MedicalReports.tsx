@@ -1,87 +1,119 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, FileText } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle2, Clock, MapPin } from "lucide-react";
+import { vetHistory, type AlertHistoryRecord } from "@/lib/api";
 
-import { Button } from "@/components/ui/button";
-import {
-  downloadVetReport,
-  getMedicalReports,
-  type MedicalReport,
-} from "@/lib/veterinarianMockApi";
-
-const statusStyles = {
-  Critical: "bg-rose-600 dark:bg-rose-900/40 text-white dark:text-rose-400",
-  Complete: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
-  Review: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
-};
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+}
 
 export default function MedicalReports() {
-  const [medicalReports, setMedicalReports] = useState<MedicalReport[]>([]);
+  const [records, setRecords] = useState<AlertHistoryRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadReports() {
-      const reports = await getMedicalReports();
-      setMedicalReports(reports);
-    }
-
-    loadReports();
+    vetHistory()
+      .then(setRecords)
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load history.")
+      )
+      .finally(() => setLoading(false));
   }, []);
-
-  async function handleDownload(reportId: number) {
-    const report = medicalReports.find((item) => item.id === reportId);
-    if (!report) return;
-
-    const blob = await downloadVetReport(reportId);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${report.title.replace(/\s+/g, "_")}_${report.date}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
-  }
 
   return (
     <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-5 shadow-sm border border-slate-200 dark:border-slate-800">
-      <h3 className="mb-6 text-xl font-bold text-slate-900 dark:text-white">
-        Recent Medical Reports
+      <h3 className="mb-6 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <FileText className="w-5 h-5 text-blue-500" />
+        My Detection History
       </h3>
+
+      {loading && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Loading history…
+        </p>
+      )}
+      {!loading && error && <p className="text-sm text-rose-500">{error}</p>}
+      {!loading && !error && records.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No detection records yet. Use the Health Panel to run detections.
+        </p>
+      )}
+
       <div className="space-y-4">
-        {medicalReports.map((report) => (
-          <div
-            key={report.id}
-            className="flex flex-col gap-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-4 lg:flex-row lg:items-center lg:justify-between"
-          >
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-blue-100 dark:bg-blue-900/30 p-3">
-                <FileText className="h-8 w-8 text-blue-600 dark:text-blue-500" />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {report.title}
-                  </h4>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[report.status]}`}
-                  >
-                    {report.status}
-                  </span>
+        {records.map((rec) => {
+          const isDiseased = rec.prediction === "diseased";
+          return (
+            <div
+              key={rec.id}
+              className="flex flex-col gap-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-4 lg:flex-row lg:items-center lg:justify-between"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`rounded-xl p-3 flex-shrink-0 ${
+                    isDiseased
+                      ? "bg-rose-100 dark:bg-rose-900/30"
+                      : "bg-emerald-100 dark:bg-emerald-900/30"
+                  }`}
+                >
+                  {isDiseased ? (
+                    <AlertTriangle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+                  ) : (
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  )}
                 </div>
-                <p className="mt-2 text-lg text-slate-500 dark:text-slate-400">{report.date}</p>
+                <div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h4 className="text-xl font-bold text-slate-900 dark:text-white capitalize">
+                      {rec.prediction}
+                    </h4>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        isDiseased
+                          ? "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400"
+                          : "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+                      }`}
+                    >
+                      {rec.file_type}
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        rec.alert_sent === "sent"
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      Alert: {rec.alert_sent}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {rec.latitude}, {rec.longitude} · PIN: {rec.pin_code}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatDate(rec.created_at)}
+                  </p>
+                  {rec.heatmap_url && (
+                    <a
+                      href={rec.heatmap_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View on Google Maps →
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="gap-2 self-start lg:self-center dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              onClick={() => handleDownload(report.id)}
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

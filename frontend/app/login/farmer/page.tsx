@@ -3,23 +3,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sprout, ArrowLeft } from "lucide-react";
+import { Sprout, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import { farmerLogin, setToken, setRole, setUser } from "@/lib/api";
 
 export default function FarmerLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Farmer login:", { email, password });
-    // Redirect to farmer dashboard
-    router.push("/dashboard/farmer");
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await farmerLogin(email, password);
+      setToken(data.access_token);
+      setRole("farmer");
+      setUser(data.user);
+      router.push("/dashboard/farmer");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,6 +63,12 @@ export default function FarmerLogin() {
 
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg text-sm text-rose-700 dark:text-rose-400">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="email"
@@ -65,6 +83,7 @@ export default function FarmerLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
@@ -83,31 +102,18 @@ export default function FarmerLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center text-slate-600 dark:text-slate-400">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  />
-                  Remember me
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-[#00a693] dark:text-emerald-500 hover:opacity-80 hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
               <Button
                 type="submit"
-                className="w-full bg-[#00a693] dark:bg-emerald-600 hover:opacity-90 text-white font-medium py-5 rounded-lg"
+                disabled={loading}
+                className="w-full bg-[#00a693] dark:bg-emerald-600 hover:opacity-90 text-white font-medium py-5 rounded-lg flex items-center justify-center gap-2"
               >
-                Sign In
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? "Signing in…" : "Sign In"}
               </Button>
             </form>
 

@@ -9,18 +9,20 @@ import {
   Settings,
   LogOut,
   Sprout,
-  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { generateLatestReport } from "@/lib/mockApi";
 import FarmDashboard from "@/components/dashboard/farmer/FarmDashboard";
 import Reports from "@/components/dashboard/farmer/Reports";
 import DuckActivity from "@/components/dashboard/farmer/DuckActivity";
 import SettingsPage from "@/components/dashboard/farmer/Settings";
 import ThemeToggle from "@/components/ThemeToggle";
+import { clearToken, getUser } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function FarmerDashboardPage() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
+  const router = useRouter();
+  const user = getUser();
 
   const menuItems = [
     { id: "dashboard", label: "My Farm Dashboard", icon: LayoutDashboard },
@@ -28,6 +30,11 @@ export default function FarmerDashboardPage() {
     { id: "activity", label: "Duck Activity", icon: Activity },
     { id: "settings", label: "Settings", icon: Settings },
   ];
+
+  function handleLogout() {
+    clearToken();
+    router.push("/");
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -88,11 +95,13 @@ export default function FarmerDashboardPage() {
               <div className="w-10 h-10 bg-green-500 dark:bg-emerald-600 rounded-lg flex items-center justify-center">
                 <Sprout className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Farmer Account
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                  {user?.name ?? "Farmer"}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Simple monitoring</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                  {user?.email ?? ""}
+                </p>
               </div>
             </div>
           </div>
@@ -107,37 +116,17 @@ export default function FarmerDashboardPage() {
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">
               {menuItems.find((item) => item.id === activeMenu)?.label}
             </h2>
-            {activeMenu === "reports" && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                View and download your duck farm reports
-              </p>
-            )}
-            {activeMenu === "activity" && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                Monitor your ducks&apos; daily activities
-              </p>
-            )}
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            {activeMenu === "reports" && (
-              <Button
-                onClick={() => generateLatestReport()}
-                className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download Latest Report
-              </Button>
-            )}
-            <Link href="/">
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
           </div>
         </header>
 

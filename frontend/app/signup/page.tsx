@@ -3,21 +3,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sprout, Stethoscope, ArrowLeft } from "lucide-react";
+import { Sprout, Stethoscope, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import { farmerRegister, vetRegister } from "@/lib/api";
 
 export default function SignupPage() {
   const [role, setRole] = useState("farmer");
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
-    phone: "",
-    roleSpecific: "", // Farm Name, License Number, or Organization
+    pin_code: "",
+    district: "",
+    state: "",
     password: "",
     confirmPassword: "",
   });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const getRoleConfig = () => {
     switch (role) {
@@ -25,29 +31,25 @@ export default function SignupPage() {
         return {
           icon: <Sprout className="w-8 h-8 text-white" />,
           bgColor: "bg-[#00a693] dark:bg-emerald-600",
-          buttonColor: "bg-[#00a693] hover:opacity-90 dark:bg-emerald-600 dark:hover:bg-emerald-700",
+          buttonColor:
+            "bg-[#00a693] hover:opacity-90 dark:bg-emerald-600 dark:hover:bg-emerald-700",
           textColor: "text-[#00a693] dark:text-emerald-500",
-          label: "Farm Name",
-          placeholder: "Green Valley Farm",
         };
       case "veterinarian":
         return {
           icon: <Stethoscope className="w-8 h-8 text-white" />,
           bgColor: "bg-[#334155] dark:bg-indigo-600",
-          buttonColor: "bg-[#334155] hover:opacity-90 dark:bg-indigo-600 dark:hover:bg-indigo-700",
+          buttonColor:
+            "bg-[#334155] hover:opacity-90 dark:bg-indigo-600 dark:hover:bg-indigo-700",
           textColor: "text-[#334155] dark:text-indigo-400",
-          label: "License Number",
-          placeholder: "VET-12345",
         };
-
       default:
         return {
           icon: <Sprout className="w-8 h-8 text-white" />,
           bgColor: "bg-[#00a693] dark:bg-emerald-600",
-          buttonColor: "bg-[#00a693] hover:opacity-90 dark:bg-emerald-600 dark:hover:bg-emerald-700",
+          buttonColor:
+            "bg-[#00a693] hover:opacity-90 dark:bg-emerald-600 dark:hover:bg-emerald-700",
           textColor: "text-[#00a693] dark:text-emerald-500",
-          label: "Farm Name",
-          placeholder: "Green Valley Farm",
         };
     }
   };
@@ -58,13 +60,40 @@ export default function SignupPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match!");
       return;
     }
-    console.log("Signup:", { role, ...formData });
+
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      pin_code: formData.pin_code,
+      district: formData.district,
+      state: formData.state,
+      password: formData.password,
+    };
+
+    setLoading(true);
+    try {
+      if (role === "farmer") {
+        await farmerRegister(payload);
+        router.push("/login/farmer?registered=1");
+      } else {
+        await vetRegister(payload);
+        router.push("/login/veterinarian?registered=1");
+      }
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Registration failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -98,6 +127,13 @@ export default function SignupPage() {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Error banner */}
+              {error && (
+                <div className="px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg text-sm text-rose-700 dark:text-rose-400">
+                  {error}
+                </div>
+              )}
+
               {/* Role Selection */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -143,25 +179,28 @@ export default function SignupPage() {
                 </div>
               </div>
 
+              {/* Name */}
               <div>
                 <label
-                  htmlFor="fullName"
+                  htmlFor="name"
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                 >
                   Full Name
                 </label>
                 <Input
-                  id="fullName"
-                  name="fullName"
+                  id="name"
+                  name="name"
                   type="text"
                   placeholder="John Doe"
-                  value={formData.fullName}
+                  value={formData.name}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
+              {/* Email */}
               <div>
                 <label
                   htmlFor="email"
@@ -177,48 +216,75 @@ export default function SignupPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                >
-                  Phone Number
-                </label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
-                />
+              {/* District + State */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="district"
+                    className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  >
+                    District
+                  </label>
+                  <Input
+                    id="district"
+                    name="district"
+                    type="text"
+                    placeholder="e.g. Ernakulam"
+                    value={formData.district}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="state"
+                    className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                  >
+                    State
+                  </label>
+                  <Input
+                    id="state"
+                    name="state"
+                    type="text"
+                    placeholder="e.g. Kerala"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
               </div>
 
+              {/* PIN Code */}
               <div>
                 <label
-                  htmlFor="roleSpecific"
+                  htmlFor="pin_code"
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                 >
-                  {config.label}
+                  PIN Code
                 </label>
                 <Input
-                  id="roleSpecific"
-                  name="roleSpecific"
+                  id="pin_code"
+                  name="pin_code"
                   type="text"
-                  placeholder={config.placeholder}
-                  value={formData.roleSpecific}
+                  placeholder="e.g. 682001"
+                  value={formData.pin_code}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
+              {/* Password */}
               <div>
                 <label
                   htmlFor="password"
@@ -235,10 +301,12 @@ export default function SignupPage() {
                   onChange={handleChange}
                   required
                   minLength={8}
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
+              {/* Confirm Password */}
               <div>
                 <label
                   htmlFor="confirmPassword"
@@ -255,39 +323,18 @@ export default function SignupPage() {
                   onChange={handleChange}
                   required
                   minLength={8}
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
-              <div className="flex items-start text-sm">
-                <input
-                  type="checkbox"
-                  className="mr-2 mt-1 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-                  required
-                />
-                <label className="text-slate-600 dark:text-slate-400">
-                  I agree to the{" "}
-                  <Link
-                    href="/terms"
-                    className={`${config.textColor} hover:underline`}
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    href="/privacy"
-                    className={`${config.textColor} hover:underline`}
-                  >
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-
               <Button
                 type="submit"
-                className={`w-full ${config.buttonColor} text-white font-medium py-5 rounded-lg`}
+                disabled={loading}
+                className={`w-full ${config.buttonColor} text-white font-medium py-5 rounded-lg flex items-center justify-center gap-2`}
               >
-                Create Account
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? "Creating account…" : "Create Account"}
               </Button>
             </form>
 

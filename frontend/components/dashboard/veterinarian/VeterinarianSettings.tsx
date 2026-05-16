@@ -1,132 +1,112 @@
-import { Bell, Lock, MonitorDot, UserRound } from "lucide-react";
+"use client";
 
+import { useEffect, useState } from "react";
+import { User, Mail, MapPin, Hash, Info, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { vetMe, clearToken, type VetOut } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function VeterinarianSettings() {
+  const [profile, setProfile] = useState<VetOut | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    vetMe()
+      .then(setProfile)
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load profile.")
+      )
+      .finally(() => setLoading(false));
+  }, []);
+
+  function handleLogout() {
+    clearToken();
+    router.push("/");
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-2">
+      {/* Profile Info */}
       <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm border border-slate-200 dark:border-slate-800">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-xl bg-blue-100 dark:bg-blue-900/30 p-3">
-            <UserRound className="h-5 w-5 text-blue-600 dark:text-blue-500" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Profile Settings</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Full Name
-            </label>
-            <Input placeholder="Dr. Jane Smith" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Email
-            </label>
-            <Input placeholder="vet@example.com" type="email" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              License Number
-            </label>
-            <Input placeholder="VET-12345" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white">
-            Save Profile
-          </Button>
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-xl bg-violet-100 dark:bg-violet-900/30 p-3">
-            <Lock className="h-5 w-5 text-violet-600 dark:text-violet-500" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Security</h3>
-        </div>
-        <div className="space-y-4">
-          <Input type="password" placeholder="Current password" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          <Input type="password" placeholder="New password" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          <Input type="password" placeholder="Confirm new password" className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white" />
-          <Button className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white">
-            Update Password
-          </Button>
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-xl bg-amber-100 dark:bg-amber-900/30 p-3">
-            <Bell className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Notifications</h3>
-        </div>
-        <div className="space-y-3 text-slate-700 dark:text-slate-300">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            Critical health alerts
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            Behavioral anomalies
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            Daily report digest
-          </label>
-        </div>
-      </section>
-
-      <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/30 p-3">
-            <MonitorDot className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
+            <User className="h-5 w-5 text-blue-600 dark:text-blue-500" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-            Review Preferences
+            My Profile
           </h3>
         </div>
-        <div className="space-y-4 text-slate-700 dark:text-slate-300">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Default review queue
-            </label>
-            <select className="w-full rounded-lg border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white px-3 py-2">
-              <option>Health Alerts</option>
-              <option>Image Review</option>
-              <option>Behavior Analysis</option>
-            </select>
+
+        {loading && (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Loading profile…
+          </p>
+        )}
+        {error && <p className="text-sm text-rose-500">{error}</p>}
+        {profile && (
+          <div className="space-y-3">
+            {[
+              { icon: User, label: "Full Name", value: profile.name },
+              { icon: Mail, label: "Email", value: profile.email },
+              { icon: MapPin, label: "District", value: profile.district },
+              { icon: MapPin, label: "State", value: profile.state },
+              { icon: Hash, label: "PIN Code", value: profile.pin_code },
+            ].map(({ icon: Icon, label, value }) => (
+              <div
+                key={label}
+                className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
+              >
+                <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {label}
+                  </p>
+                  <p className="font-semibold text-slate-800 dark:text-white">
+                    {value}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            Auto-highlight abnormal posture detections
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              defaultChecked
-              className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
-            />
-            Show clinical suggestions in alerts
-          </label>
-        </div>
+        )}
       </section>
+
+      {/* Info + Logout */}
+      <div className="space-y-6">
+        <section className="rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-6">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-blue-700 dark:text-blue-400">
+              Profile editing and password changes are not currently supported via the
+              dashboard. Contact your system administrator for account updates.
+            </p>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-xl bg-rose-100 dark:bg-rose-900/30 p-3">
+              <LogOut className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Session
+            </h3>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            You are logged in as a <strong>Veterinarian</strong>. Click below to sign out securely.
+          </p>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="text-rose-600 border-rose-300 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-800 dark:hover:bg-rose-950/30"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </section>
+      </div>
     </div>
   );
 }
