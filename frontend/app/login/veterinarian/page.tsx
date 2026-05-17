@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { vetLogin, setToken, setRole, setUser } from "@/lib/api";
+import Image from "next/image";
 
 export default function VeterinarianLogin() {
   const [email, setEmail] = useState("");
@@ -50,8 +51,8 @@ export default function VeterinarianLogin() {
 
         <Card className="bg-white dark:bg-slate-900/80 backdrop-blur-xl shadow-xl border-slate-200 dark:border-slate-800">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4 w-16 h-16 bg-[#334155] dark:bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Stethoscope className="w-8 h-8 text-white" />
+            <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                <Image src="/vet-duck3.png" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
             </div>
             <CardTitle className="text-2xl font-bold text-slate-800 dark:text-white font-serif">
               Veterinarian Login

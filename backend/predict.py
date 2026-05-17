@@ -4,37 +4,105 @@ import numpy as np
 import joblib
 from pathlib import Path
 from fastapi import HTTPException
+import tensorflow as tf
 
-_keras_model   = None
-_sklearn_model = None
+# ── Lazy-loaded model handles ─────────────────────────────────────────────────
+_keras_image_model = None   # img.keras  — image classifier
+_keras_video_model = None   # best_model.keras — BiLSTM+Attention video classifier
+_efficientnet      = None   # EfficientNetB0 feature extractor (shared, frozen)
 
-MODEL_DIR          = Path(os.getenv("MODEL_DIR", "."))
-KERAS_MODEL_PATH   = MODEL_DIR / "img.keras"
-SKLEARN_MODEL_PATH = MODEL_DIR / "vo.pkl"
+# ── Paths ─────────────────────────────────────────────────────────────────────
+MODEL_DIR             = Path(os.getenv("MODEL_DIR", "."))
+KERAS_IMAGE_PATH      = MODEL_DIR / "img.keras"
+KERAS_VIDEO_PATH      = MODEL_DIR / "best_model.keras"   # ← new model
 
-IMG_SIZE = (224, 224)
-
-
-def _load_keras():
-    global _keras_model
-    if _keras_model is None:
-        if not KERAS_MODEL_PATH.exists():
-            raise HTTPException(status_code=500,
-                detail=f"Keras model not found at {KERAS_MODEL_PATH}")
-        import tensorflow as tf
-        _keras_model = tf.keras.models.load_model(str(KERAS_MODEL_PATH))
-    return _keras_model
+# ── Video model hyper-params (must match training exactly) ────────────────────
+NUM_FRAMES  = 16     # frames sampled per video   (CONFIG['NUM_FRAMES'])
+IMG_SIZE    = 224    # EfficientNetB0 input size   (CONFIG['IMG_SIZE'])
+FEATURE_DIM = 1280   # EfficientNetB0 GAP output dim
 
 
-def _load_sklearn():
-    global _sklearn_model
-    if _sklearn_model is None:
-        if not SKLEARN_MODEL_PATH.exists():
-            raise HTTPException(status_code=500,
-                detail=f"sklearn model not found at {SKLEARN_MODEL_PATH}")
-        _sklearn_model = joblib.load(str(SKLEARN_MODEL_PATH))
-    return _sklearn_model
+# ─────────────────────────────────────────────────────────────────────────────
+#  Loaders
+# ─────────────────────────────────────────────────────────────────────────────
 
+def _load_keras_image():
+    """Load the image classification model (img.keras)."""
+    global _keras_image_model
+    if _keras_image_model is None:
+        if not KERAS_IMAGE_PATH.exists():
+            raise HTTPException(
+                status_code=500,
+                detail=f"Keras image model not found at {KERAS_IMAGE_PATH}",
+            )
+        _keras_image_model = tf.keras.models.load_model(str(KERAS_IMAGE_PATH))
+    return _keras_image_model
+
+
+def _load_efficientnet():
+    """
+    Lazy-load a frozen EfficientNetB0 feature extractor.
+    Identical to what was used during training:
+        EfficientNetB0(include_top=False, weights='imagenet', pooling='avg')
+    Output shape per frame: (1280,)
+    """
+    global _efficientnet
+    if _efficientnet is None:
+        base = tf.keras.applications.EfficientNetB0(
+            include_top=False,
+            weights="imagenet",
+            input_shape=(IMG_SIZE, IMG_SIZE, 3),
+            pooling="avg",
+        )
+        base.trainable = False
+        _efficientnet = base
+    return _efficientnet
+
+
+class TemporalAttentionPool(tf.keras.layers.Layer):
+    """
+    Weighted sum over the time axis.
+    Mirrors the custom layer defined in the training notebook (Cell 10).
+    Must be registered here so Keras can deserialize best_model.keras
+    without requiring safe_mode=False.
+
+    Input : (batch, T, D)
+    Output: (batch, D)
+    """
+    def call(self, x):
+        return tf.reduce_sum(x, axis=1)
+
+    def get_config(self):
+        return super().get_config()
+
+
+def _load_keras_video():
+    """
+    Load the BiLSTM+Attention video classification model (best_model.keras).
+
+    The model uses a custom TemporalAttentionPool layer (replaces the old
+    Lambda layer). We pass it via custom_objects so Keras can deserialize
+    the architecture correctly without safe_mode=False.
+    """
+    global _keras_video_model
+    if _keras_video_model is None:
+        if not KERAS_VIDEO_PATH.exists():
+            raise HTTPException(
+                status_code=500,
+                detail=f"Video model not found at {KERAS_VIDEO_PATH}",
+            )
+        _keras_video_model = tf.keras.models.load_model(
+            str(KERAS_VIDEO_PATH),
+            custom_objects={"TemporalAttentionPool": TemporalAttentionPool},
+            compile=False,
+        )
+        _keras_video_model.compile(
+            optimizer="adam",
+            loss="binary_crossentropy",
+            metrics=["accuracy"],
+        )
+    return _keras_video_model
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _preprocess_image_bytes(image_bytes: bytes) -> np.ndarray:
     arr = np.frombuffer(image_bytes, dtype=np.uint8)
@@ -42,19 +110,23 @@ def _preprocess_image_bytes(image_bytes: bytes) -> np.ndarray:
     if img is None:
         raise HTTPException(status_code=400, detail="Could not decode image.")
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, IMG_SIZE)
+    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
     img = img.astype("float32") / 255.0
-    return np.expand_dims(img, axis=0)
+    return np.expand_dims(img, axis=0)   # (1, 224, 224, 3)
 
 
-def _extract_video_feature_vector(video_path: str, n_features: int) -> np.ndarray:
+# ─────────────────────────────────────────────────────────────────────────────
+#  Video frame extraction  (matches training's extract_frames())
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _extract_frames(video_path: str) -> np.ndarray:
     """
-    Extract frames from video and produce a flat vector of exactly n_features.
+    Uniformly sample NUM_FRAMES frames from the video.
 
-    Strategy:
-    1. Figure out how many frames and what frame size gives n_features pixels.
-    2. Sample that many frames evenly, resize each, flatten & concatenate.
-    3. If we can't find a clean split, sample 1 frame and resize to fit exactly.
+    Returns
+    -------
+    np.ndarray, shape (NUM_FRAMES, IMG_SIZE, IMG_SIZE, 3), dtype float32, [0,1]
+    Raises HTTPException on any read failure.
     """
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -62,82 +134,101 @@ def _extract_video_feature_vector(video_path: str, n_features: int) -> np.ndarra
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     if total_frames <= 0:
-        total_frames = 100  # fallback estimate
+        total_frames = NUM_FRAMES       # safe fallback
 
-    # ── Find a (n_frames, height, width, channels) that matches n_features ──
-    best = None
-    for n_frames in [1, 2, 4, 5, 6, 8, 10, 12, 16, 20, 24, 30, 32]:
-        for channels in [3, 1]:
-            px_per_frame = n_features / (n_frames * channels)
-            if px_per_frame != int(px_per_frame):
-                continue
-            px_per_frame = int(px_per_frame)
-            side = px_per_frame ** 0.5
-            if abs(side - round(side)) < 1e-6:
-                side = int(round(side))
-                best = (n_frames, side, side, channels)
-                break
-            for h in range(8, 300):
-                if px_per_frame % h == 0:
-                    w = px_per_frame // h
-                    if 8 <= w <= 300:
-                        best = (n_frames, h, w, channels)
-                        break
-            if best:
-                break
-        if best:
-            break
+    indices = np.linspace(0, total_frames - 1, NUM_FRAMES, dtype=int)
+    frames  = []
 
-    if best is None:
-        side = int(n_features ** 0.5) + 1
-        best = (1, side, side, 1)
-
-    n_frames, h, w, channels = best
-
-    # ── Sample frames ────────────────────────────────────────────────────────
-    indices = np.linspace(0, total_frames - 1, n_frames, dtype=int)
-    parts = []
     for idx in indices:
         cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
         ret, frame = cap.read()
-        if not ret:
-            frame = np.zeros((h, w, 3), dtype=np.uint8)
-        if channels == 1:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frame = cv2.resize(frame, (w, h))
-            parts.append(frame.flatten())
-        else:
+        if ret:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = cv2.resize(frame, (w, h))
-            parts.append(frame.flatten())
+            frame = cv2.resize(frame, (IMG_SIZE, IMG_SIZE))
+        else:
+            # Duplicate last good frame (or zeros if no good frame yet)
+            frame = frames[-1] if frames else np.zeros(
+                (IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8
+            )
+        frames.append(frame)
+
     cap.release()
 
-    vector = np.concatenate(parts).astype("float32") / 255.0
+    # Guarantee exactly NUM_FRAMES
+    while len(frames) < NUM_FRAMES:
+        frames.append(frames[-1])
 
-    # Safety: trim or pad to exactly n_features
-    if len(vector) > n_features:
-        vector = vector[:n_features]
-    elif len(vector) < n_features:
-        vector = np.pad(vector, (0, n_features - len(vector)))
+    # Normalise to [0, 1]  — training used img / 255 before passing to EfficientNet
+    arr = np.array(frames[:NUM_FRAMES], dtype=np.float32) / 255.0
+    return arr   # (NUM_FRAMES, 224, 224, 3)
 
-    return vector.reshape(1, -1)
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  EfficientNet feature extraction  (matches training's extract_video_features)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _extract_efficientnet_features(frames: np.ndarray) -> np.ndarray:
+    """
+    Pass each frame through EfficientNetB0 to get a (NUM_FRAMES, 1280) array.
+
+    During training the frames were re-scaled to 0-255 before the extractor
+    because EfficientNetB0 includes its own internal rescaling layer.
+    We replicate that here.
+
+    Parameters
+    ----------
+    frames : np.ndarray  (NUM_FRAMES, 224, 224, 3), float32, values in [0,1]
+
+    Returns
+    -------
+    np.ndarray  (NUM_FRAMES, 1280), float32
+    """
+    extractor = _load_efficientnet()
+
+    # Training code: frames_uint = (frames * 255.0).astype(np.float32)
+    frames_uint = (frames * 255.0).astype(np.float32)   # (T, H, W, 3)
+
+    features = extractor.predict(frames_uint, verbose=0)  # (T, 1280)
+    return features.astype(np.float32)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Label normalisation  (unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LABEL_MAP = {
+    "0": "healthy",  "1": "diseased",
+    0:   "healthy",   1:  "diseased",
+    "healthy": "healthy", "diseased": "diseased",
+}
+
+def normalise_label(raw) -> str:
+    """Convert model output (0/1 or string) to 'healthy' or 'diseased'."""
+    return _LABEL_MAP.get(raw, str(raw))
 
 
 CLASS_NAMES = ["healthy", "diseased"]
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Public API
+# ─────────────────────────────────────────────────────────────────────────────
+
 def predict_image(image_bytes: bytes) -> dict:
-    model      = _load_keras()
+    """Predict duck health from a single image."""
+    model      = _load_keras_image()
     tensor     = _preprocess_image_bytes(image_bytes)
     raw_output = model.predict(tensor)
 
     if raw_output.shape[-1] == 1:
+        # Sigmoid output: ≥ 0.5 → healthy
         confidence = float(raw_output[0][0])
         predicted  = "healthy" if confidence >= 0.5 else "diseased"
-        confidence = confidence if predicted == "healthy" else 1 - confidence
+        confidence = confidence if predicted == "healthy" else 1.0 - confidence
     else:
+        # Softmax output
         idx        = int(np.argmax(raw_output[0]))
-        raw_label  = CLASS_NAMES[idx] if idx < len(CLASS_NAMES) else idx
+        raw_label  = CLASS_NAMES[idx] if idx < len(CLASS_NAMES) else str(idx)
         predicted  = normalise_label(raw_label)
         confidence = float(raw_output[0][idx])
 
@@ -145,30 +236,46 @@ def predict_image(image_bytes: bytes) -> dict:
 
 
 def predict_video(video_path: str) -> dict:
-    model      = _load_sklearn()
-    n_features = getattr(model, "n_features_in_", 16488)
-    features   = _extract_video_feature_vector(video_path, n_features)
-    raw        = model.predict(features)[0]
-    predicted  = normalise_label(raw)
-    proba      = model.predict_proba(features)[0] if hasattr(model, "predict_proba") else None
-    confidence = float(max(proba)) if proba is not None else 1.0
+    """
+    Predict duck health from a video file.
+
+    Pipeline (mirrors the Jupyter training notebook exactly):
+      1. Uniformly sample NUM_FRAMES (16) frames  → (16, 224, 224, 3)
+      2. Extract EfficientNetB0 features per frame → (16, 1280)
+      3. Add batch dim                             → (1, 16, 1280)
+      4. Pass through BiLSTM + Attention model     → sigmoid scalar
+      5. Threshold at 0.5: ≥ 0.5 → diseased
+
+    Returns
+    -------
+    dict with keys:
+        prediction  – "healthy" or "diseased"
+        confidence  – probability of the predicted class (0-1)
+        diseased_prob – raw sigmoid output
+        healthy_prob  – 1 - sigmoid output
+    """
+    # ── Step 1: frames ────────────────────────────────────────────────────────
+    frames = _extract_frames(video_path)           # (16, 224, 224, 3)
+
+    # ── Step 2: CNN features ──────────────────────────────────────────────────
+    features = _extract_efficientnet_features(frames)   # (16, 1280)
+
+    # ── Step 3: batch dimension ───────────────────────────────────────────────
+    model_input = features[np.newaxis, ...]        # (1, 16, 1280)
+
+    # ── Step 4: BiLSTM + Attention inference ──────────────────────────────────
+    video_model   = _load_keras_video()
+    raw_output    = video_model.predict(model_input, verbose=0)  # (1, 1)
+    prob_diseased = float(raw_output[0][0])
+    prob_healthy  = 1.0 - prob_diseased
+
+    # ── Step 5: threshold ─────────────────────────────────────────────────────
+    predicted  = "diseased" if prob_diseased >= 0.5 else "healthy"
+    confidence = prob_diseased if predicted == "diseased" else prob_healthy
 
     return {
-        "prediction": predicted,
-        "confidence": round(confidence, 4),
+        "prediction":   predicted,
+        "confidence":   round(confidence, 4),
+        "diseased_prob": round(prob_diseased, 4),
+        "healthy_prob":  round(prob_healthy,  4),
     }
-
-
-# ── Label normalisation ───────────────────────────────────────────────────────
-# The SVM was trained with numeric labels (0 = healthy, 1 = diseased).
-# Map any numeric or string variant to the canonical strings used by uploads.py.
-
-_LABEL_MAP = {
-    "0": "healthy", "1": "diseased",
-    0:   "healthy", 1:   "diseased",
-    "healthy": "healthy", "diseased": "diseased",
-}
-
-def normalise_label(raw) -> str:
-    """Convert model output (0/1 or string) to 'healthy' or 'diseased'."""
-    return _LABEL_MAP.get(raw, str(raw))

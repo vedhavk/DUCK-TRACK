@@ -20,6 +20,7 @@ export default function FarmDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [pinCode, setPinCode] = useState(profile?.pin_code ?? "");
@@ -51,6 +52,12 @@ export default function FarmDashboard() {
     setSelectedFile(f);
     setUploadResult(null);
     setUploadError(null);
+    if (f) {
+      const url = URL.createObjectURL(f);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
   }
 
   async function handleUpload(e: React.FormEvent) {
@@ -69,6 +76,7 @@ export default function FarmDashboard() {
       const result = await uploadFile(selectedFile, lat, lng, pinCode || profile?.pin_code || "");
       setUploadResult(result);
       setSelectedFile(null);
+      setPreviewUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
     } catch (err: unknown) {
@@ -129,9 +137,39 @@ export default function FarmDashboard() {
             onChange={handleFileChange}
           />
 
-          {selectedFile && (
-            <div className="px-4 py-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl text-sm text-teal-700 dark:text-teal-300 truncate">
-              📎 {selectedFile.name}
+          {selectedFile && previewUrl && (
+            <div className="space-y-3">
+              <div className="px-4 py-2.5 bg-teal-50/75 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-900 rounded-xl text-sm text-teal-700 dark:text-teal-300 truncate font-semibold">
+                📎 Selected File: {selectedFile.name}
+              </div>
+              <div className="relative rounded-2xl overflow-hidden aspect-video max-h-[300px] bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                {selectedFile.type.startsWith("video/") || selectedFile.name.endsWith(".mp4") || selectedFile.name.endsWith(".avi") ? (
+                  <video 
+                    src={previewUrl} 
+                    controls 
+                    className="max-h-[300px] object-contain w-full"
+                  />
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt="Selected media preview" 
+                    className="max-h-[300px] object-contain"
+                  />
+                )}
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                    if (cameraInputRef.current) cameraInputRef.current.value = "";
+                  }}
+                  className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 text-xs font-bold transition shadow-md"
+                  title="Remove media"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           )}
 

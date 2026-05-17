@@ -3,8 +3,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Sprout,
-  Stethoscope,
   Shield,
   ArrowRight,
   AlertTriangle,
@@ -12,6 +10,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
@@ -34,13 +33,13 @@ export default function Home() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-[#00a693] dark:bg-emerald-600 p-3 rounded-2xl shadow-lg">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8.5 5c-1.33 0-2.42.83-2.83 2H4c-.55 0-1 .45-1 1s.45 1 1 1h1.67c.41 1.17 1.5 2 2.83 2 1.33 0 2.42-.83 2.83-2H20c.55 0 1-.45 1-1s-.45-1-1-1h-8.67c-.41-1.17-1.5-2-2.83-2zm0 2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 3c-1.33 0-2.42.83-2.83 2H4c-.55 0-1 .45-1 1s.45 1 1 1h8.67c.41 1.17 1.5 2 2.83 2 1.33 0 2.42-.83 2.83-2H20c.55 0 1-.45 1-1s-.45-1-1-1h-1.67c-.41-1.17-1.5-2-2.83-2zm0 2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z" />
-              </svg>
+              <Image
+                src="/chatbot-icon.png"
+                alt="Duck Track Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-[#00a693] dark:text-emerald-500 mb-2 font-serif">Duck Track</h1>
@@ -152,8 +151,8 @@ export default function Home() {
           {/* Farmer Card */}
           <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-8 pb-6 text-center">
-              <div className="mx-auto mb-6 w-16 h-16 bg-[#00a693] dark:bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Sprout className="w-8 h-8 text-white" />
+              <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                <Image src="/farmer-duck3.png" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">Farmer</h2>
               <p className="text-slate-600 dark:text-slate-400 mb-6 min-h-12">
@@ -171,8 +170,8 @@ export default function Home() {
           {/* Veterinarian Card */}
           <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-8 pb-6 text-center">
-              <div className="mx-auto mb-6 w-16 h-16 bg-[#334155] dark:bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Stethoscope className="w-8 h-8 text-white" />
+              <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                <Image src="/vet-duck3.png" alt="Veterinarian" width={80} height={80} className="w-full h-full object-cover" />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">
                 Veterinarian

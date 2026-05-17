@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import Image from "next/image";
 
 import { adminLogin, setToken, setRole, setUser } from "@/lib/api";
 import { Loader2 } from "lucide-react";
@@ -60,8 +61,8 @@ export default function AdminLogin() {
 
         <Card className="bg-white dark:bg-slate-900/80 backdrop-blur-xl shadow-xl border-slate-200 dark:border-slate-800">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto mb-4 w-16 h-16 bg-[#334155] dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                <Image src="/admin.jpeg" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
             </div>
             <CardTitle className="text-2xl font-bold text-slate-800 dark:text-white font-serif">
               System Admin Login
