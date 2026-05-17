@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -21,8 +21,13 @@ import { useRouter } from "next/navigation";
 
 export default function FarmerDashboardPage() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const user = getUser();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const menuItems = [
     { id: "dashboard", label: "My Farm Dashboard", icon: LayoutDashboard },
@@ -97,10 +102,10 @@ export default function FarmerDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
-                  {user?.name ?? "Farmer"}
+                  {mounted ? (user?.name ?? "Farmer") : "Farmer"}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                  {user?.email ?? ""}
+                  {mounted ? (user?.email ?? "") : ""}
                 </p>
               </div>
             </div>

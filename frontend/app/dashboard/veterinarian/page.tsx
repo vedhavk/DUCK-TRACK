@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -57,8 +57,13 @@ const pageMeta = {
 export default function VeterinarianDashboardPage() {
   const [activeMenu, setActiveMenu] =
     useState<(typeof menuItems)[number]["id"]>("health");
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const user = getUser();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function handleLogout() {
     clearToken();
@@ -129,10 +134,10 @@ export default function VeterinarianDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 truncate">
-                  {user?.name ?? "Veterinarian"}
+                  {mounted ? (user?.name ?? "Veterinarian") : "Veterinarian"}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                  {user?.email ?? ""}
+                  {mounted ? (user?.email ?? "") : ""}
                 </p>
               </div>
             </div>
