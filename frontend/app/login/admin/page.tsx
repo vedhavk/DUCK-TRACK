@@ -25,6 +25,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       const data = await adminLogin(email, password);
+      localStorage.setItem("admin_token", data.access_token);
       setToken(data.access_token);
       setRole("admin");
       setUser({

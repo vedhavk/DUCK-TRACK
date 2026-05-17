@@ -10,7 +10,7 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 
-from database import get_db, Admin, Farmer, Veterinary, AlertCallFarmer, AlertCallVeterinary
+from database import get_db, Admin, Farmer, Veterinary, AlertCallFarmer, AlertCallVeterinary, AdminDetectionLog
 
 load_dotenv()
 
@@ -322,3 +322,58 @@ def get_all_history(current: Admin = Depends(get_current_admin), db: Session = D
     # Sort history by date descending
     history.sort(key=lambda x: x["created_at"], reverse=True)
     return history
+
+
+class AdminDetectionLogCreate(BaseModel):
+    latitude: float
+    longitude: float
+    prediction: str
+    confidence: float
+    media_type: str
+
+
+@router.post("/detection-log", status_code=status.HTTP_201_CREATED)
+def create_detection_log(
+    data: AdminDetectionLogCreate,
+    current: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    log_entry = AdminDetectionLog(
+        latitude=data.latitude,
+        longitude=data.longitude,
+        prediction=data.prediction,
+        confidence=data.confidence,
+        media_type=data.media_type,
+    )
+    db.add(log_entry)
+    db.commit()
+    db.refresh(log_entry)
+    return {
+        "id": log_entry.id,
+        "latitude": log_entry.latitude,
+        "longitude": log_entry.longitude,
+        "prediction": log_entry.prediction,
+        "confidence": log_entry.confidence,
+        "media_type": log_entry.media_type,
+        "created_at": log_entry.created_at.isoformat(),
+    }
+
+
+@router.get("/detection-logs")
+def get_detection_logs(
+    current: Admin = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    logs = db.query(AdminDetectionLog).order_by(AdminDetectionLog.created_at.desc()).all()
+    return [
+        {
+            "id": l.id,
+            "latitude": l.latitude,
+            "longitude": l.longitude,
+            "prediction": l.prediction,
+            "confidence": l.confidence,
+            "media_type": l.media_type,
+            "created_at": l.created_at.isoformat(),
+        }
+        for l in logs
+    ]

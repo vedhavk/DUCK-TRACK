@@ -93,6 +93,39 @@ def get_current_vet(
     return vet
 
 
+def get_current_vet_or_admin(
+    token: str = Depends(oauth2_scheme),
+    db:    Session = Depends(get_db),
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        role:  str = payload.get("role")
+        if email is None or role not in ("veterinary", "admin"):
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    if role == "veterinary":
+        vet = db.query(Veterinary).filter(Veterinary.email == email).first()
+        if vet is None:
+            raise credentials_exception
+        return vet
+    elif role == "admin":
+        from database import Admin
+        admin = db.query(Admin).filter(Admin.username == email).first()
+        if admin is None:
+            raise credentials_exception
+        return admin
+    else:
+        raise credentials_exception
+
+
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
 @router.post("/register", response_model=VetOut, status_code=status.HTTP_201_CREATED)
@@ -233,7 +266,7 @@ def get_farmers_overview(
 
 @router.get("/disease-map")
 def get_disease_map(
-    current: Veterinary = Depends(get_current_vet),
+    current: tuple = Depends(get_current_vet_or_admin),
     db:      Session = Depends(get_db),
 ):
     from database import OutbreakHistory
@@ -241,7 +274,6 @@ def get_disease_map(
     outbreaks = (
         db.query(OutbreakHistory)
         .order_by(OutbreakHistory.created_at.desc())
-        .limit(1)
         .all()
     )
     
@@ -251,7 +283,7 @@ def get_disease_map(
             "farm_name": ob.reporter_name,
             "latitude": ob.latitude,
             "longitude": ob.longitude,
-            "disease": "Duck Virus", # or use prediction logic if added to db
+            "disease": "Avian Influenza" if getattr(ob, "prediction", "diseased") == "diseased" else "Healthy",
             "date_detected": ob.created_at.date().isoformat()
         })
         

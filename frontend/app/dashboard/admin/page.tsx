@@ -35,10 +35,6 @@ const menuItems = [
   { id: "history", label: "Scan History", icon: FileText },
   { id: "users", label: "User Management", icon: Users },
   { id: "heatmap", label: "Disease Heatmap", icon: Map },
-  { id: "dataset", label: "Dataset Management", icon: Database },
-  { id: "training", label: "Model Training", icon: BrainCircuit },
-  { id: "performance", label: "Performance Results", icon: BarChart3 },
-  { id: "settings", label: "System Settings", icon: Settings },
 ] as const;
 
 const pageMeta = {
@@ -57,22 +53,6 @@ const pageMeta = {
   heatmap: {
     title: "Disease Spread Heatmap",
     subtitle: "Geographical distribution mapping of confirmed disease cases",
-  },
-  dataset: {
-    title: "Dataset Management",
-    subtitle: "Manage training and validation datasets",
-  },
-  training: {
-    title: "Model Training",
-    subtitle: "Train and monitor model iterations",
-  },
-  performance: {
-    title: "Performance Results",
-    subtitle: "Review model performance benchmarks",
-  },
-  settings: {
-    title: "System Settings",
-    subtitle: "Configure global detection settings",
   },
 } as const;
 
@@ -191,10 +171,6 @@ export default function AdminDashboardPage() {
           {activeMenu === "history" && <DetectionHistory />}
           {activeMenu === "users" && <UserManagement />}
           {activeMenu === "heatmap" && <DiseaseHeatmap />}
-          {activeMenu === "dataset" && <DatasetManagement />}
-          {activeMenu === "training" && <ModelTraining />}
-          {activeMenu === "performance" && <PerformanceResults />}
-          {activeMenu === "settings" && <SystemSettings />}
         </div>
       </main>
     </div>

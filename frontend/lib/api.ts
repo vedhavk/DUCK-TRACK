@@ -9,15 +9,17 @@ export const API_BASE = "http://127.0.0.1:8000";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("dt_token");
+  return localStorage.getItem("admin_token") || localStorage.getItem("dt_token");
 }
 
 export function setToken(token: string): void {
   localStorage.setItem("dt_token", token);
+  localStorage.setItem("admin_token", token);
 }
 
 export function clearToken(): void {
   localStorage.removeItem("dt_token");
+  localStorage.removeItem("admin_token");
   localStorage.removeItem("dt_user");
   localStorage.removeItem("dt_role");
 }
@@ -110,12 +112,20 @@ export interface UploadResult {
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 function authHeaders(): Record<string, string> {
-  const token = getToken();
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("admin_token") || getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("dt_token");
+      localStorage.removeItem("dt_role");
+      localStorage.removeItem("dt_user");
+      window.location.href = "/login/admin";
+    }
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
@@ -488,4 +498,36 @@ export async function adminGetHistory(): Promise<AdminHistoryRecord[]> {
     headers: { ...authHeaders(), "Content-Type": "application/json" },
   });
   return handleResponse<AdminHistoryRecord[]>(res);
+}
+
+export interface AdminDetectionLog {
+  id: number;
+  latitude: number;
+  longitude: number;
+  prediction: string;
+  confidence: number;
+  media_type: string;
+  created_at: string;
+}
+
+export async function createDetectionLog(data: {
+  latitude: number;
+  longitude: number;
+  prediction: string;
+  confidence: number;
+  media_type: string;
+}): Promise<AdminDetectionLog> {
+  const res = await fetch(`${API_BASE}/admin/detection-log`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<AdminDetectionLog>(res);
+}
+
+export async function getDetectionLogs(): Promise<AdminDetectionLog[]> {
+  const res = await fetch(`${API_BASE}/admin/detection-logs`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<AdminDetectionLog[]>(res);
 }

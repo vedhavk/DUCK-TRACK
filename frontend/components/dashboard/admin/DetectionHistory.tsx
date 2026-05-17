@@ -22,8 +22,13 @@ export default function DetectionHistory() {
       try {
         const data = await adminGetHistory();
         setHistory(data);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to load global scan history:", err);
+        if (err.message && err.message.includes("401")) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("dt_token");
+          window.location.href = "/login/admin";
+        }
       } finally {
         setLoading(false);
       }

@@ -51,6 +51,18 @@ class Admin(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class AdminDetectionLog(Base):
+    __tablename__ = "admin_detection_logs"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    latitude   = Column(Float, nullable=False)
+    longitude  = Column(Float, nullable=False)
+    prediction = Column(String, nullable=False)
+    confidence = Column(Float, nullable=False)
+    media_type = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class AlertCallFarmer(Base):
     __tablename__ = "alertcall_farmer"
 

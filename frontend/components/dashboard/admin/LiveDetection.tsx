@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { AlertCircle, Camera, Upload, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { uploadFile, UploadResult } from "@/lib/api";
+import { uploadFile, createDetectionLog, UploadResult } from "@/lib/api";
 
 export default function LiveDetection() {
   const [file, setFile] = useState<File | null>(null);
@@ -59,6 +59,19 @@ export default function LiveDetection() {
       // Send selected coordinates and PIN code to the backend pipeline
       const res = await uploadFile(file, lat, lng, pinCode);
       setResult(res);
+
+      // Save to admin detection logs for live heatmap mapping
+      try {
+        await createDetectionLog({
+          latitude: lat,
+          longitude: lng,
+          prediction: res.prediction,
+          confidence: res.confidence,
+          media_type: res.file_type || (file.type.startsWith("video/") ? "video" : "image")
+        });
+      } catch (logErr) {
+        console.error("Failed to persist admin detection log:", logErr);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Media analysis failed. Please try again.");
     } finally {
