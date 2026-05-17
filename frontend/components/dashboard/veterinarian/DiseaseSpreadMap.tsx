@@ -55,13 +55,7 @@ export default function DiseaseSpreadMap() {
               <p className="text-xs text-slate-500">10 - 20 km</p>
             </div>
         </div>
-        <div className="bg-white dark:bg-slate-900/80 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full border-2 border-emerald-500 border-dashed"></div>
-            <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Safe Zone</p>
-              <p className="text-xs text-slate-500">&gt; 20 km</p>
-            </div>
-        </div>
+        
       </div>
 
       {loading && (

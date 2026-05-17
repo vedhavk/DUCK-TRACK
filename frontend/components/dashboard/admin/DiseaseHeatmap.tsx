@@ -154,13 +154,7 @@ export default function DiseaseHeatmap() {
             <p className="text-[11px] text-slate-500">10 - 20 km risk radius</p>
           </div>
         </div>
-        <div className="bg-white dark:bg-slate-900/80 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3">
-          <div className="w-4 h-4 rounded-full border-2 border-emerald-500 border-dashed"></div>
-          <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white">Safe Zone Clear</p>
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Safe validation indicator</p>
-          </div>
-        </div>
+        
       </div>
 
       {/* Layer Markers Sub Legend Info */}
