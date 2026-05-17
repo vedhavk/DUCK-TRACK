@@ -9,16 +9,38 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 
+import { adminLogin, setToken, setRole, setUser } from "@/lib/api";
+import { Loader2 } from "lucide-react";
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Admin login:", { email, password });
-    router.push("/dashboard/admin");
+    setError(null);
+    setLoading(true);
+    try {
+      const data = await adminLogin(email, password);
+      setToken(data.access_token);
+      setRole("admin");
+      setUser({
+        id: data.user.id,
+        name: "Administrator",
+        email: data.user.username,
+        pin_code: "000000",
+        district: "System",
+        state: "System"
+      });
+      router.push("/dashboard/admin");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,6 +72,12 @@ export default function AdminLogin() {
 
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg text-sm text-rose-700 dark:text-rose-400">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="email"
@@ -64,6 +92,7 @@ export default function AdminLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
@@ -82,6 +111,7 @@ export default function AdminLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={loading}
                   className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
@@ -104,9 +134,11 @@ export default function AdminLogin() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#334155] dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-medium py-5 rounded-lg"
+                disabled={loading}
+                className="w-full bg-[#334155] dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-medium py-5 rounded-lg flex items-center justify-center gap-2"
               >
-                Sign In
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? "Signing in…" : "Sign In"}
               </Button>
             </form>
 

@@ -42,6 +42,15 @@ class Veterinary(Base):
     password = Column(String, nullable=False)
 
 
+class Admin(Base):
+    __tablename__ = "admin"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    username   = Column(String, unique=True, nullable=False, index=True)
+    password   = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class AlertCallFarmer(Base):
     __tablename__ = "alertcall_farmer"
 
@@ -117,4 +126,4 @@ def get_db():
 
 
 def create_tables():
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine)

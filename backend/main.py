@@ -6,13 +6,21 @@ Run with:  uvicorn main:app --reload
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import create_tables
+from database import create_tables, SessionLocal
 import farmer
 import veterinary
 import uploads
+import admin
 
 # ── Create DB tables on startup ───────────────────────────────────────────────
 create_tables()
+
+# ── Seed default admin on startup ─────────────────────────────────────────────
+db = SessionLocal()
+try:
+    admin.seed_default_admin(db)
+finally:
+    db.close()
 
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
@@ -36,6 +44,7 @@ app.add_middleware(
 app.include_router(farmer.router)
 app.include_router(veterinary.router)
 app.include_router(uploads.router)
+app.include_router(admin.router)
 import chatbot_service
 app.include_router(chatbot_service.router)
 

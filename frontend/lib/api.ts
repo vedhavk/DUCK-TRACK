@@ -345,3 +345,147 @@ export async function getDiseaseMap(): Promise<DiseaseMapLocation[]> {
   });
   return handleResponse(res);
 }
+
+// ── Admin endpoints ───────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  created_at: string;
+}
+
+export interface AdminAuthToken {
+  access_token: string;
+  token_type: string;
+  user: AdminUser;
+}
+
+export interface AdminHistoryRecord {
+  id: string;
+  user: string;
+  user_type: string;
+  file_type: string;
+  prediction: string;
+  confidence: number;
+  created_at: string;
+  latitude: number;
+  longitude: number;
+  pin_code: string;
+}
+
+export async function adminLogin(
+  username: string,
+  password: string
+): Promise<AdminAuthToken> {
+  const body = new URLSearchParams({ username, password });
+  const res = await fetch(`${API_BASE}/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+  return handleResponse<AdminAuthToken>(res);
+}
+
+export async function adminMe(): Promise<AdminUser> {
+  const res = await fetch(`${API_BASE}/admin/me`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<AdminUser>(res);
+}
+
+export async function adminGetFarmers(): Promise<FarmerOut[]> {
+  const res = await fetch(`${API_BASE}/admin/users/farmers`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<FarmerOut[]>(res);
+}
+
+export async function adminCreateFarmer(data: {
+  name: string;
+  pin_code: string;
+  email: string;
+  district: string;
+  state: string;
+  password: string;
+}): Promise<FarmerOut> {
+  const res = await fetch(`${API_BASE}/admin/users/farmers`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<FarmerOut>(res);
+}
+
+export async function adminUpdateFarmer(
+  id: number,
+  data: ProfileUpdate
+): Promise<FarmerOut> {
+  const res = await fetch(`${API_BASE}/admin/users/farmers/${id}`, {
+    method: "PUT",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<FarmerOut>(res);
+}
+
+export async function adminDeleteFarmer(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/users/farmers/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok && res.status !== 204) {
+    await handleResponse<void>(res);
+  }
+}
+
+export async function adminGetVets(): Promise<VetOut[]> {
+  const res = await fetch(`${API_BASE}/admin/users/vets`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<VetOut[]>(res);
+}
+
+export async function adminCreateVet(data: {
+  name: string;
+  pin_code: string;
+  email: string;
+  district: string;
+  state: string;
+  password: string;
+}): Promise<VetOut> {
+  const res = await fetch(`${API_BASE}/admin/users/vets`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<VetOut>(res);
+}
+
+export async function adminUpdateVet(
+  id: number,
+  data: ProfileUpdate
+): Promise<VetOut> {
+  const res = await fetch(`${API_BASE}/admin/users/vets/${id}`, {
+    method: "PUT",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<VetOut>(res);
+}
+
+export async function adminDeleteVet(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/users/vets/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok && res.status !== 204) {
+    await handleResponse<void>(res);
+  }
+}
+
+export async function adminGetHistory(): Promise<AdminHistoryRecord[]> {
+  const res = await fetch(`${API_BASE}/admin/history`, {
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+  });
+  return handleResponse<AdminHistoryRecord[]>(res);
+}

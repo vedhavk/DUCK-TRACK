@@ -4,3 +4,5 @@ export { default as ModelTraining } from "./ModelTraining";
 export { default as PerformanceResults } from "./PerformanceResults";
 export { default as SystemSettings } from "./SystemSettings";
 export { default as UserManagement } from "./UserManagement";
+export { default as DetectionHistory } from "./DetectionHistory";
+export { default as DiseaseHeatmap } from "./DiseaseHeatmap";

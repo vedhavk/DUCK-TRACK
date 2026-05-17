@@ -51,16 +51,19 @@ def get_current_user(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         role:  str = payload.get("role")
-        if not email or role not in ("farmer", "veterinary"):
+        if not email or role not in ("farmer", "veterinary", "admin"):
             raise exc
     except JWTError:
         raise exc
 
-    user = (
-        db.query(Farmer).filter(Farmer.email == email).first()
-        if role == "farmer"
-        else db.query(Veterinary).filter(Veterinary.email == email).first()
-    )
+    if role == "farmer":
+        user = db.query(Farmer).filter(Farmer.email == email).first()
+    elif role == "veterinary":
+        user = db.query(Veterinary).filter(Veterinary.email == email).first()
+    else:
+        from database import Admin
+        user = db.query(Admin).filter(Admin.username == email).first()
+
     if user is None:
         raise exc
     return user, role
@@ -144,11 +147,33 @@ async def upload_file(
             alert_sent= "n/a",          # default for healthy; overwritten if diseased
         )
     else:
+        # veterinary or admin
+        if role == "veterinary":
+            vet_id = user.id
+        else:
+            # Fallback for admin uploads (which do not have a dedicated veterinary_id)
+            first_vet = db.query(Veterinary).first()
+            if not first_vet:
+                placeholder = Veterinary(
+                    name="System Placeholder Vet",
+                    pin_code="000000",
+                    email="system_vet@ducktrack.com",
+                    district="System",
+                    state="System",
+                    password="placeholderpassword"
+                )
+                db.add(placeholder)
+                db.commit()
+                db.refresh(placeholder)
+                vet_id = placeholder.id
+            else:
+                vet_id = first_vet.id
+
         record = AlertCallVeterinary(
             latitude      = latitude,
             longitude     = longitude,
             pin_code      = pin_code,
-            veterinary_id = user.id,
+            veterinary_id = vet_id,
             prediction    = prediction,
             file_type     = file_type,
             alert_sent    = "n/a",
@@ -168,7 +193,7 @@ async def upload_file(
             pin_code      = pin_code,
             reported_by   = role,
             reporter_id   = user.id,
-            reporter_name = user.name,
+            reporter_name = getattr(user, "name", getattr(user, "username", "Admin")),
             file_type     = file_type,
             alert_sent    = "pending",
         )
