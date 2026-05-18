@@ -52,7 +52,7 @@ export default function VeterinarianLogin() {
         <Card className="bg-white dark:bg-slate-900/80 backdrop-blur-xl shadow-xl border-slate-200 dark:border-slate-800">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                <Image src="/vet-duck3.png" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
+                <Image src="/vet-duck5.jpeg" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
             </div>
             <CardTitle className="text-2xl font-bold text-slate-800 dark:text-white font-serif">
               Veterinarian Login

@@ -7,7 +7,7 @@ import {
   ArrowRight,
   AlertTriangle,
   Info,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +19,11 @@ export default function Home() {
       <div className="w-full max-w-6xl mx-auto">
         <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-4">
           <Link href="/login/admin" className="group relative">
-            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-800 transition-all"
+            >
               <Shield className="w-5 h-5" />
             </Button>
             <div className="absolute right-0 top-full mt-2 w-max px-3 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-lg">
@@ -28,7 +32,7 @@ export default function Home() {
           </Link>
           <ThemeToggle />
         </div>
-        
+
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
@@ -42,7 +46,9 @@ export default function Home() {
               />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-[#00a693] dark:text-emerald-500 mb-2 font-serif">Duck Track</h1>
+          <h1 className="text-4xl font-bold text-[#00a693] dark:text-emerald-500 mb-2 font-serif">
+            Duck Track
+          </h1>
           <p className="text-xl text-slate-600 dark:text-slate-300 font-medium">
             Smart Duck Monitoring System
           </p>
@@ -57,15 +63,17 @@ export default function Home() {
             <div className="flex flex-col md:flex-row">
               {/* Image Banner Side */}
               <div className="md:w-2/5 relative min-h-[260px] md:min-h-auto">
-                <div 
-                  className="absolute inset-0 bg-[url('/ducks_swimming.jpg')] bg-cover bg-center" 
+                <div
+                  className="absolute inset-0 bg-[url('/ducks_swimming.jpg')] bg-cover bg-center"
                   aria-label="Ducks swimming in a lake"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-slate-900/40 to-transparent md:bg-linear-to-r md:from-slate-900/50 md:to-transparent" />
-                
+
                 {/* Mobile Title overlay */}
                 <div className="absolute bottom-6 left-6 text-white md:hidden">
-                  <h2 className="text-2xl font-bold font-serif shadow-sm">Avian Influenza</h2>
+                  <h2 className="text-2xl font-bold font-serif shadow-sm">
+                    Avian Influenza
+                  </h2>
                   <p className="text-sm opacity-90 mt-1 flex items-center gap-1">
                     <Info className="w-4 h-4" /> Important Awareness
                   </p>
@@ -76,19 +84,24 @@ export default function Home() {
               <div className="md:w-3/5 p-8 md:p-10 flex flex-col justify-center">
                 {/* Desktop Title */}
                 <div className="hidden md:flex flex-col mb-6">
-                  
                   <h2 className="text-3xl font-bold text-slate-800 dark:text-white font-serif leading-tight">
                     Avian Influenza Alert & Early Reporting
                   </h2>
                 </div>
 
                 <p className="text-slate-600 dark:text-slate-300 text-sm md:text-base leading-relaxed mb-6">
-                  Avian Influenza (Bird Flu) is a highly contagious viral disease that can rapidly spread among ducks and poultry. Early detection and quick reporting are critical to prevent outbreaks, protect farms, and safeguard nearby poultry populations.
+                  Avian Influenza (Bird Flu) is a highly contagious viral
+                  disease that can rapidly spread among ducks and poultry. Early
+                  detection and quick reporting are critical to prevent
+                  outbreaks, protect farms, and safeguard nearby poultry
+                  populations.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-6">
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Important Points</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+                      Important Points
+                    </h3>
                     <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                       <li className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
@@ -96,18 +109,23 @@ export default function Home() {
                       </li>
                       <li className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
-                        <span>Symptoms: sudden death, Respiratory distress, Behavioral changes, swelling, breathing difficulty, reduced egg production.</span>
+                        <span>
+                          Symptoms: sudden death, Respiratory distress,
+                          Behavioral changes, swelling, breathing difficulty,
+                          reduced egg production.
+                        </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
                         <span>Early reporting helps vets respond faster.</span>
                       </li>
-                    
                     </ul>
                   </div>
-                  
+
                   <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">Why It Matters</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+                      Why It Matters
+                    </h3>
                     <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
@@ -129,13 +147,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                
-
                 <div className="mt-auto">
                   <Link href="/login/farmer">
-                    <Button 
-                      className="w-full h-12 rounded-xl bg-green-600 hover:bg-rose-700 dark:bg-green-600 dark:hover:bg-green-400 text-white font-bold transition-all shadow-md hover:shadow-lg text-lg flex items-center justify-center gap-2"
-                    >
+                    <Button className="w-full h-12 rounded-xl bg-green-600 hover:bg-rose-700 dark:bg-green-600 dark:hover:bg-green-400 text-white font-bold transition-all shadow-md hover:shadow-lg text-lg flex items-center justify-center gap-2">
                       Report a Suspected Disease
                       <ArrowRight className="w-5 h-5" />
                     </Button>
@@ -152,9 +166,17 @@ export default function Home() {
           <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-8 pb-6 text-center">
               <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                <Image src="/farmer-duck3.png" alt="Farmer" width={80} height={80} className="w-full h-full object-cover" />
+                <Image
+                  src="/farmer-duck3.png"
+                  alt="Farmer"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">Farmer</h2>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">
+                Farmer
+              </h2>
               <p className="text-slate-600 dark:text-slate-400 mb-6 min-h-12">
                 Monitor your ducks with simple visual dashboard
               </p>
@@ -171,7 +193,13 @@ export default function Home() {
           <Card className="bg-white dark:bg-slate-800/50 hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800">
             <CardContent className="pt-8 pb-6 text-center">
               <div className="mx-auto mb-6 w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                <Image src="/vet-duck3.png" alt="Veterinarian" width={80} height={80} className="w-full h-full object-cover" />
+                <Image
+                  src="/vet-duck5.jpeg"
+                  alt="Veterinarian"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3 font-serif">
                 Veterinarian
