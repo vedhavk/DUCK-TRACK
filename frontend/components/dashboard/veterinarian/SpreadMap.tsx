@@ -84,19 +84,19 @@ export default function SpreadMap({ locations }: { locations: DiseaseMapLocation
                   {/* 0-5 km: Red Zone */}
                   <Circle 
                     center={[loc.latitude, loc.longitude]}
-                    pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.3, weight: 1 }}
+                    pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.06, weight: 1.5 }}
                     radius={5000}
                   />
                   {/* 5-10 km: Orange Zone */}
                   <Circle 
                     center={[loc.latitude, loc.longitude]}
-                    pathOptions={{ color: 'orange', fillColor: 'orange', fillOpacity: 0.2, weight: 1 }}
+                    pathOptions={{ color: '#f97316', fillColor: '#f97316', fillOpacity: 0.03, weight: 1.2 }}
                     radius={10000}
                   />
                   {/* 10-20 km: Yellow Zone */}
                   <Circle 
                     center={[loc.latitude, loc.longitude]}
-                    pathOptions={{ color: 'yellow', fillColor: 'yellow', fillOpacity: 0.1, weight: 1 }}
+                    pathOptions={{ color: '#eab308', fillColor: '#eab308', fillOpacity: 0.01, weight: 1 }}
                     radius={20000}
                   />
                 </>
