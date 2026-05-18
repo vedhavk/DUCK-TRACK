@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Sprout, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function FarmerSignup() {
   const [formData, setFormData] = useState({

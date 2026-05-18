@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CameraCapture from "@/components/CameraCapture";
 import {
   vetMe,
   getOutbreakHistory,
@@ -59,6 +60,11 @@ export default function HealthMonitoring() {
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Live camera state
+  const [showLiveCamera, setShowLiveCamera] = useState(false);
+  const [capturedNotes, setCapturedNotes] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   useEffect(() => {
     vetMe()
       .then((data) => {
@@ -100,6 +106,21 @@ export default function HealthMonitoring() {
     setSelectedFile(f);
     setUploadResult(null);
     setUploadError(null);
+    setCapturedNotes("");
+    if (f) {
+      setPreviewUrl(URL.createObjectURL(f));
+    } else {
+      setPreviewUrl(null);
+    }
+  }
+
+  function handleCameraCapture(file: File, notes?: string) {
+    setSelectedFile(file);
+    setUploadResult(null);
+    setUploadError(null);
+    setCapturedNotes(notes ?? "");
+    setPreviewUrl(URL.createObjectURL(file));
+    setShowLiveCamera(false);
   }
 
   async function handleUpload(e: React.FormEvent) {
@@ -123,6 +144,7 @@ export default function HealthMonitoring() {
       );
       setUploadResult(result);
       setSelectedFile(null);
+      setPreviewUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
       // Refresh histories
@@ -205,11 +227,11 @@ export default function HealthMonitoring() {
             </button>
             <button
               type="button"
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => setShowLiveCamera(true)}
               className="group h-20 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-blue-400 dark:hover:border-blue-500 transition-all text-slate-600 dark:text-slate-300"
             >
               <Camera className="w-5 h-5 text-blue-500" />
-              <span className="font-semibold text-sm">Use Camera</span>
+              <span className="font-semibold text-sm">Use Live Camera</span>
             </button>
           </div>
 
@@ -229,9 +251,45 @@ export default function HealthMonitoring() {
             onChange={handleFileChange}
           />
 
-          {selectedFile && (
-            <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 truncate">
-              📎 {selectedFile.name}
+          {selectedFile && previewUrl && (
+            <div className="space-y-3">
+              <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300 truncate font-semibold">
+                📎 Selected File: {selectedFile.name}
+              </div>
+              {capturedNotes && (
+                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 italic">
+                  ✍️ Diagnosis Note: {capturedNotes}
+                </div>
+              )}
+              <div className="relative rounded-2xl overflow-hidden aspect-video max-h-[300px] bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                {selectedFile.type.startsWith("video/") || selectedFile.name.endsWith(".mp4") || selectedFile.name.endsWith(".avi") ? (
+                  <video 
+                    src={previewUrl} 
+                    controls 
+                    className="max-h-[300px] object-contain w-full"
+                  />
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt="Selected media preview" 
+                    className="max-h-[300px] object-contain"
+                  />
+                )}
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                    setCapturedNotes("");
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                    if (cameraInputRef.current) cameraInputRef.current.value = "";
+                  }}
+                  className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 text-xs font-bold transition shadow-md"
+                  title="Remove media"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           )}
 
@@ -322,6 +380,14 @@ export default function HealthMonitoring() {
                   </span>
                 </div>
               )}
+              {capturedNotes && (
+                <div className="col-span-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Diagnosis Annotation: </span>
+                  <span className="block px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-lg text-slate-700 dark:text-slate-300 italic text-xs">
+                    {capturedNotes}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -397,6 +463,15 @@ export default function HealthMonitoring() {
           ))}
         </div>
       </section>
+
+      {showLiveCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowLiveCamera(false)}
+          allowNotes={true}
+          buttonLabel="Use Capture for Outbreak Review"
+        />
+      )}
     </div>
   );
 }

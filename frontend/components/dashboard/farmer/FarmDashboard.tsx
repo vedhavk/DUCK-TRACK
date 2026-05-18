@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, Camera, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CameraCapture from "@/components/CameraCapture";
 import {
   farmerMe,
   uploadFile,
@@ -27,6 +28,10 @@ export default function FarmDashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  
+  // Live camera state
+  const [showLiveCamera, setShowLiveCamera] = useState(false);
+  const [capturedNotes, setCapturedNotes] = useState("");
 
   useEffect(() => {
     farmerMe()
@@ -52,12 +57,23 @@ export default function FarmDashboard() {
     setSelectedFile(f);
     setUploadResult(null);
     setUploadError(null);
+    setCapturedNotes("");
     if (f) {
       const url = URL.createObjectURL(f);
       setPreviewUrl(url);
     } else {
       setPreviewUrl(null);
     }
+  }
+
+  function handleCameraCapture(file: File, notes?: string) {
+    setSelectedFile(file);
+    setUploadResult(null);
+    setUploadError(null);
+    setCapturedNotes(notes ?? "");
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setShowLiveCamera(false);
   }
 
   async function handleUpload(e: React.FormEvent) {
@@ -110,13 +126,13 @@ export default function FarmDashboard() {
             </button>
             <button
               type="button"
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => setShowLiveCamera(true)}
               className="group h-24 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-teal-400 dark:hover:border-teal-500 transition-all text-slate-600 dark:text-slate-300"
             >
               <div className="p-2 bg-white dark:bg-slate-700 rounded-full shadow-sm group-hover:scale-110 transition-transform">
                 <Camera className="w-5 h-5 text-teal-500" />
               </div>
-              <span className="font-semibold text-sm">Use Camera</span>
+              <span className="font-semibold text-sm">Use Live Camera</span>
             </button>
           </div>
 
@@ -142,6 +158,11 @@ export default function FarmDashboard() {
               <div className="px-4 py-2.5 bg-teal-50/75 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-900 rounded-xl text-sm text-teal-700 dark:text-teal-300 truncate font-semibold">
                 📎 Selected File: {selectedFile.name}
               </div>
+              {capturedNotes && (
+                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 italic">
+                  ✍️ Note: {capturedNotes}
+                </div>
+              )}
               <div className="relative rounded-2xl overflow-hidden aspect-video max-h-[300px] bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
                 {selectedFile.type.startsWith("video/") || selectedFile.name.endsWith(".mp4") || selectedFile.name.endsWith(".avi") ? (
                   <video 
@@ -161,6 +182,7 @@ export default function FarmDashboard() {
                   onClick={() => {
                     setSelectedFile(null);
                     setPreviewUrl(null);
+                    setCapturedNotes("");
                     if (fileInputRef.current) fileInputRef.current.value = "";
                     if (cameraInputRef.current) cameraInputRef.current.value = "";
                   }}
@@ -288,10 +310,27 @@ export default function FarmDashboard() {
                   </span>
                 </div>
               )}
+              {capturedNotes && (
+                <div className="col-span-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Attached Note: </span>
+                  <span className="block px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-lg text-slate-700 dark:text-slate-300 italic text-xs">
+                    {capturedNotes}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {showLiveCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowLiveCamera(false)}
+          allowNotes={true}
+          buttonLabel="Use Photo for Analysis"
+        />
+      )}
     </div>
   );
 }
