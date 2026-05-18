@@ -151,7 +151,6 @@ export default function Home() {
                   <Link href="/login/farmer">
                     <Button className="w-full h-12 rounded-xl bg-green-600 hover:bg-rose-700 dark:bg-green-600 dark:hover:bg-green-400 text-white font-bold transition-all shadow-md hover:shadow-lg text-lg flex items-center justify-center gap-2">
                       Report a Suspected Disease
-                      <ArrowRight className="w-5 h-5" />
                     </Button>
                   </Link>
                 </div>
@@ -183,7 +182,6 @@ export default function Home() {
               <Link href="/login/farmer">
                 <Button className="w-full bg-[#00a693] dark:bg-emerald-600 hover:opacity-90 text-white font-medium py-5 rounded-lg group">
                   Sign In as Farmer
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </CardContent>
@@ -208,9 +206,8 @@ export default function Home() {
                 Advanced health monitoring and disease detection
               </p>
               <Link href="/login/veterinarian">
-                <Button className="w-full bg-[#334155] dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-medium py-5 rounded-lg group">
+                <Button className="w-full bg-[#334155] dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-500 text-white font-medium py-5 rounded-lg group ">
                   Sign In as Veterinarian
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </CardContent>
