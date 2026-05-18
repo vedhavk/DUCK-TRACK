@@ -175,7 +175,7 @@ export default function Reports() {
                       )}
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      📍 {rec.latitude}, {rec.longitude} · PIN: {rec.pin_code}
+                      {rec.latitude}, {rec.longitude} · PIN: {rec.pin_code}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
